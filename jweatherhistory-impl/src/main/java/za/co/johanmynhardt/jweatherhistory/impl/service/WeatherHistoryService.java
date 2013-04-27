@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
 import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
@@ -29,6 +30,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
 	private static SimpleDateFormat simpleDateFormat;
 	private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final Logger logger = Logger.getLogger(WeatherHistoryService.class.getName());
 
 	private static Connection connection;
 
@@ -44,6 +46,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			@Override
 			public void run() {
 				try {
+					System.err.println("Closing connection " + connection);
 					connection.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
@@ -67,7 +70,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			Statement statement = connection.createStatement();
 			String SQL = format("INSERT INTO WEATHERENTRY (DESCRIPTION, ENTRY_DATE, CAPTURE_DATE) values ('%s', '%s', '%s')",
 					description, simpleDateFormat.format(weatherEntry.getEntryDate()), timestampFormat.format(weatherEntry.getCaptureDate()));
-			System.out.println("SQL = " + SQL);
+			logger.info("SQL = " + SQL);
 			statement.execute(SQL, Statement.RETURN_GENERATED_KEYS);
 			ResultSet resultSet = statement.getGeneratedKeys();
 
@@ -169,17 +172,19 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			List<WeatherEntry> results = new ArrayList<>();
 			ResultSetMetaData metadata = resultSet.getMetaData();
 
-			System.out.println("Columns:");
+			logger.info("Columns:");
 			for (int i = 1; i <= metadata.getColumnCount(); i++) {
-				System.out.print(metadata.getColumnName(i) + " | ");
+				logger.info(metadata.getColumnName(i) + " | ");
 			}
-			System.out.println();
 			while (resultSet.next()) {
 				for (int i = 1; i <= metadata.getColumnCount(); i++) {
-					System.out.println(resultSet.getObject(i));
+					logger.info(""+resultSet.getObject(i));
 				}
-			}
+				WeatherEntry weatherEntry = new WeatherEntry(resultSet.getLong(1), resultSet.getString(2), resultSet.getDate(3), resultSet.getTimestamp(4), null, null);
+				results.add(weatherEntry);
 
+				logger.info("weatherEntry = " + weatherEntry);
+			}
 			return results;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -201,7 +206,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
 			preparedStatement.setLong(4, weatherEntry.getId());
 
-			System.out.println("Executing update: " + preparedStatement.toString());
+			logger.info("Executing update: " + preparedStatement.toString());
 
 			preparedStatement.executeUpdate();
 			connection.commit();

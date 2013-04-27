@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
@@ -17,6 +18,7 @@ import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
  */
 public class WeatherHistoryServiceTest {
 	public static final String CONNECTION_URL = "jdbc:derby:/tmp/weatherhistory";
+	private Logger logger = Logger.getLogger(WeatherHistoryServiceTest.class.getName());
 
 	@Test
 	public void testCreateRainEntry() throws Exception {
@@ -33,7 +35,7 @@ public class WeatherHistoryServiceTest {
 
 		WeatherEntry weathertry = weatherHistoryService.createWeatherEntry("WeatherEntry description", new Date(), rainEntry, windEntry);
 
-		System.out.println("weathertry = " + weathertry);
+		logger.info("weathertry = " + weathertry);
 
 		weatherHistoryService.getAllWeatherEntries();
 	}

@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 
@@ -12,9 +13,11 @@ import org.junit.Test;
  * Unit test for simple App.
  */
 public class ModelTest {
+	Logger logger = Logger.getLogger(ModelTest.class.getName());
 
 	@Test
 	public void testModels() throws SQLException {
+
 
 		Connection connection = DriverManager.getConnection("jdbc:derby:/tmp/weatherhistory;create=true");
 
@@ -22,7 +25,7 @@ public class ModelTest {
 		ResultSet resultset = statement.executeQuery("SELECT * fROM WINDENTRY");
 
 		while (resultset.next()) {
-			System.out.println(resultset.getString(0));
+			logger.info(resultset.getString(0));
 		}
 
 		connection.close();
@@ -30,10 +33,10 @@ public class ModelTest {
 
 		WeatherEntry weatherEntry = new WeatherEntry();
 
-		System.out.println("weatherEntry = " + weatherEntry);
+		logger.info("weatherEntry = " + weatherEntry);
 
 		RainEntry rainEntry = new RainEntry();
 
-		System.out.println("rainEntry = " + rainEntry);
+		logger.info("rainEntry = " + rainEntry);
 	}
 }

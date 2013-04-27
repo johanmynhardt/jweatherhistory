@@ -13,6 +13,18 @@ public class WeatherEntry {
 	private WindEntry windEntry;
 	private RainEntry rainEntry;
 
+	public WeatherEntry() {
+	}
+
+	public WeatherEntry(long id, String description, Date entryDate, Date captureDate, WindEntry windEntry, RainEntry rainEntry) {
+		this.id = id;
+		this.description = description;
+		this.entryDate = entryDate;
+		this.captureDate = captureDate;
+		this.windEntry = windEntry;
+		this.rainEntry = rainEntry;
+	}
+
 	public long getId() {
 		return id;
 	}
@@ -66,9 +78,10 @@ public class WeatherEntry {
 		return "WeatherEntry{" +
 				"id=" + id +
 				", description='" + description + '\'' +
-				", date=" + captureDate +
+				", entryDate=" + entryDate +
+				", captureDate=" + captureDate +
 				", windEntry=" + windEntry +
 				", rainEntry=" + rainEntry +
-				'}';
+				"} " + super.toString();
 	}
 }

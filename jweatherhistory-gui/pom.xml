@@ -8,10 +8,9 @@
 		<artifactId>jweatherhistory</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<groupId>za.co.johanmynhardt.jweatherhistory</groupId>
-	<artifactId>jweatherhistory-api</artifactId>
+	<artifactId>jweatherhistory-gui</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<name>jweatherhistory-api</name>
+	<name>jweatherhistory-gui</name>
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +18,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>za.co.johanmynhardt.jweatherhistory</groupId>
-			<artifactId>jweatherhistory-model</artifactId>
+			<artifactId>jweatherhistory-api</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
 	</dependencies>
