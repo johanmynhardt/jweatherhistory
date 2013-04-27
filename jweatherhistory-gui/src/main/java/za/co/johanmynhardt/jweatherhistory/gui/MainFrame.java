@@ -2,6 +2,7 @@ package za.co.johanmynhardt.jweatherhistory.gui;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.swing.*;
@@ -19,11 +20,15 @@ import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 /**
  * @author Johan Mynhardt
  */
-public class MainFrame extends JFrame {
+public class MainFrame extends JFrame implements WeatherEntryListener {
 
 	private final WeatherHistoryService weatherHistoryService = new WeatherHistoryService();
 	private final Logger logger = Logger.getLogger(MainFrame.class.getName());
 	private final UIBuilderService builderService = new UIBuilderService();
+
+	java.util.List<WeatherEntry> entries = new ArrayList<>();
+	JTable jTable;
+	TableModel tableModel;
 
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
@@ -34,16 +39,14 @@ public class MainFrame extends JFrame {
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
-		setJMenuBar(menuBarBuilder.addJMenuItem("Dummy", new AbstractAction() {
+		setJMenuBar(menuBarBuilder.addJMenuItem("Exit", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				logger.info("Dummy performed");
+				System.exit(0);
 			}
 		}).build());
 
-		TableModel tableModel = new AbstractTableModel() {
-			java.util.List<WeatherEntry> entries = weatherHistoryService.getAllWeatherEntries();
-
+		tableModel = new AbstractTableModel() {
 			public int getRowCount() {
 				return entries.size();
 			}
@@ -56,7 +59,6 @@ public class MainFrame extends JFrame {
 			@Override
 			public Object getValueAt(int row, int column) {
 				WeatherEntry selectedEntry = entries.get(row);
-				logger.info("selectedEntry = " + selectedEntry);
 
 				switch (column) {
 					case 1:
@@ -76,7 +78,7 @@ public class MainFrame extends JFrame {
 		TableColumnModel tableColumnModel = new DefaultTableColumnModel();
 		tableColumnModel.addColumn(new TableColumn());
 
-		JTable jTable = new JTable(tableModel, createTableColumnModel());
+		jTable = new JTable(tableModel, createTableColumnModel());
 
 		JScrollPane scrollPane = new JScrollPane(jTable);
 		scrollPane.setBorder(BorderFactory.createTitledBorder("Weather Entries"));
@@ -85,7 +87,7 @@ public class MainFrame extends JFrame {
 		toolBar.add(builderService.newJButton("New Entry", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				new WeatherEntryEditor(weatherHistoryService);
+				new WeatherEntryEditor(weatherHistoryService, MainFrame.this);
 			}
 		}));
 		toolBar.add(new JToolBar.Separator());
@@ -95,6 +97,13 @@ public class MainFrame extends JFrame {
 		add(scrollPane, BorderLayout.CENTER);
 
 		setVisible(true);
+		updateItems();
+	}
+
+	@Override
+	public void updateItems() {
+		entries = weatherHistoryService.getAllWeatherEntries();
+		((AbstractTableModel)tableModel).fireTableDataChanged();
 	}
 
 	private TableColumnModel createTableColumnModel() {

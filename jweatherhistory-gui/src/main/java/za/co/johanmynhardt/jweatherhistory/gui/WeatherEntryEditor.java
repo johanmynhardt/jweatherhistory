@@ -1,11 +1,14 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
@@ -15,7 +18,9 @@ import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
  * @author Johan Mynhardt
  */
 public class WeatherEntryEditor extends JFrame {
+	private final Logger logger = Logger.getLogger(WeatherEntryEditor.class.getName());
 	private final WeatherHistoryService weatherHistoryService;
+	private final WeatherEntryListener entryListener;
 	JTextField tfDate = new JTextField();
 	JSpinner jSpinnerMin = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
 	JSpinner jSpinnerMax = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
@@ -25,9 +30,12 @@ public class WeatherEntryEditor extends JFrame {
 	JTextArea taWindDescription = new JTextArea();
 	JTextArea taRainDescription = new JTextArea();
 
+	private UIBuilderService uiBuilderService = new UIBuilderService();
 
-	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService) throws HeadlessException {
+
+	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener) throws HeadlessException {
 		this.weatherHistoryService = weatherHistoryService;
+		this.entryListener = listener;
 		setTitle("Add/Edit WeatherEntry");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -60,9 +68,30 @@ public class WeatherEntryEditor extends JFrame {
 
 		JPanel cancelSavePanel = new JPanel(new BorderLayout());
 
-		buttonPanel.add(new JButton("Cancel"));
+		buttonPanel.add(uiBuilderService.newJButton("Cancel", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				logger.info("Disposing of WeatherEntryEditor.");
+				dispose();
+			}
+		}));
 		buttonPanel.add(Box.createHorizontalStrut(10));
-		buttonPanel.add(new JButton("Save"));
+		buttonPanel.add(uiBuilderService.newJButton("OK", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				//TODO set entryDate
+				RainEntry rainEntry = new RainEntry();
+				rainEntry.setVolume((Integer) jSpinnerRainVolume.getValue());
+				rainEntry.setDescription(taRainDescription.getText());
+
+				WindEntry windEntry = new WindEntry();
+				windEntry.setWindDirection((WindDirection) windDirectionJComboBox.getSelectedItem());
+				windEntry.setDescription(taWindDescription.getText());
+				saveNewWeatherEntry(taDescription.getText(), new Date(), rainEntry, windEntry);
+				entryListener.updateItems();
+				dispose();
+			}
+		}));
 		cancelSavePanel.add(buttonPanel, BorderLayout.EAST);
 
 		add(cancelSavePanel, new GridBagConstraints(4, 7, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
