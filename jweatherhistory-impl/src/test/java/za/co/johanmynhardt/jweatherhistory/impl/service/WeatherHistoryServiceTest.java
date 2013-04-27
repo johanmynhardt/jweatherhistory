@@ -34,5 +34,7 @@ public class WeatherHistoryServiceTest {
 		WeatherEntry weathertry = weatherHistoryService.createWeatherEntry("WeatherEntry description", new Date(), rainEntry, windEntry);
 
 		System.out.println("weathertry = " + weathertry);
+
+		weatherHistoryService.getAllWeatherEntries();
 	}
 }

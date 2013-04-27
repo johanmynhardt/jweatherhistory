@@ -3,12 +3,16 @@ package za.co.johanmynhardt.jweatherhistory.impl.service;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
+import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
@@ -19,7 +23,7 @@ import static java.lang.String.format;
 /**
  * @author Johan Mynhardt
  */
-public class WeatherHistoryService implements CaptureService {
+public class WeatherHistoryService implements CaptureService, ReaderService {
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
 	private static SimpleDateFormat simpleDateFormat;
 	private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -33,6 +37,17 @@ public class WeatherHistoryService implements CaptureService {
 			e.printStackTrace();
 		}
 		simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
+
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
+			@Override
+			public void run() {
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}));
 	}
 
 	@Override
@@ -57,11 +72,18 @@ public class WeatherHistoryService implements CaptureService {
 				weatherEntry.setId(resultSet.getInt(1));
 			}
 
+			boolean updated = false;
 			if (rainEntry != null) {
 				weatherEntry.setRainEntry(createRainEntry(rainEntry.getDescription(), rainEntry.getVolume(), weatherEntry));
+				updated = true;
 			}
 			if (windEntry != null) {
 				weatherEntry.setWindEntry(createWindEntry(windEntry.getDescription(), windEntry.getWindDirection(), windEntry.getWindspeed(), weatherEntry));
+				updated = true;
+			}
+
+			if (updated) {
+
 			}
 
 			return weatherEntry;
@@ -121,5 +143,33 @@ public class WeatherHistoryService implements CaptureService {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@Override
+	public List<WeatherEntry> getAllWeatherEntries() {
+		try {
+			Statement statement = connection.createStatement();
+			String QUERY = format("SELECT * FROM WEATHERENTRY");
+			ResultSet resultSet = statement.executeQuery(QUERY);
+
+			List<WeatherEntry> results = new ArrayList<>();
+			ResultSetMetaData metadata = resultSet.getMetaData();
+
+			System.out.println("Columns:");
+			for (int i = 1; i <= metadata.getColumnCount(); i++) {
+				System.out.print(metadata.getColumnName(i) + " | ");
+			}
+			System.out.println();
+			while (resultSet.next()) {
+				for (int i = 1; i <= metadata.getColumnCount(); i++) {
+					System.out.println(resultSet.getObject(i));
+				}
+			}
+
+			return results;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return new ArrayList<>();
 	}
 }
