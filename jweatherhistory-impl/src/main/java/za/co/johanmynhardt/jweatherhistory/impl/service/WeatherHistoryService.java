@@ -2,6 +2,7 @@ package za.co.johanmynhardt.jweatherhistory.impl.service;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
 import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
+import za.co.johanmynhardt.jweatherhistory.api.service.UpdateService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
@@ -23,7 +25,7 @@ import static java.lang.String.format;
 /**
  * @author Johan Mynhardt
  */
-public class WeatherHistoryService implements CaptureService, ReaderService {
+public class WeatherHistoryService implements CaptureService, ReaderService, UpdateService {
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
 	private static SimpleDateFormat simpleDateFormat;
 	private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -59,6 +61,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService {
 
 
 		try {
+			connection.setAutoCommit(false);
 			String entryDateFormat = simpleDateFormat.format(weatherEntry.getEntryDate());
 			String captureDateFormat = timestampFormat.format(weatherEntry.getCaptureDate());
 			Statement statement = connection.createStatement();
@@ -83,12 +86,23 @@ public class WeatherHistoryService implements CaptureService, ReaderService {
 			}
 
 			if (updated) {
-
+				update(weatherEntry);
 			}
-
+			connection.commit();
 			return weatherEntry;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			try {
+				connection.setAutoCommit(true);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return null;
@@ -171,5 +185,41 @@ public class WeatherHistoryService implements CaptureService, ReaderService {
 			e.printStackTrace();
 		}
 		return new ArrayList<>();
+	}
+
+	@Override
+	public WeatherEntry update(WeatherEntry weatherEntry) {
+		try {
+			connection.setAutoCommit(false);
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(
+							"UPDATE WEATHERENTRY set DESCRIPTION = ?, WINDENTRY_ID = ?, RAINENTRY_ID = ? where ID = ?"
+					);
+
+			preparedStatement.setString(1, weatherEntry.getDescription());
+			preparedStatement.setLong(2, weatherEntry.getWindEntry().getId());
+			preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
+			preparedStatement.setLong(4, weatherEntry.getId());
+
+			System.out.println("Executing update: " + preparedStatement.toString());
+
+			preparedStatement.executeUpdate();
+			connection.commit();
+			return weatherEntry;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			try {
+				connection.setAutoCommit(true);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return weatherEntry;
 	}
 }
