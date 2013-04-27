@@ -8,7 +8,8 @@ import java.util.Date;
 public class WeatherEntry {
 	private long id;
 	private String description;
-	private Date date;
+	private Date entryDate;
+	private Date captureDate;
 	private WindEntry windEntry;
 	private RainEntry rainEntry;
 
@@ -28,12 +29,20 @@ public class WeatherEntry {
 		this.description = description;
 	}
 
-	public Date getDate() {
-		return date;
+	public Date getEntryDate() {
+		return entryDate;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setEntryDate(Date entryDate) {
+		this.entryDate = entryDate;
+	}
+
+	public Date getCaptureDate() {
+		return captureDate;
+	}
+
+	public void setCaptureDate(Date captureDate) {
+		this.captureDate = captureDate;
 	}
 
 	public WindEntry getWindEntry() {
@@ -57,7 +66,7 @@ public class WeatherEntry {
 		return "WeatherEntry{" +
 				"id=" + id +
 				", description='" + description + '\'' +
-				", date=" + date +
+				", date=" + captureDate +
 				", windEntry=" + windEntry +
 				", rainEntry=" + rainEntry +
 				'}';
