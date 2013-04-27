@@ -21,6 +21,33 @@ public class MainFrame extends JFrame {
 
 	private final WeatherHistoryService weatherHistoryService = new WeatherHistoryService();
 	private final Logger logger = Logger.getLogger(MainFrame.class.getName());
+	private JButtonGenerator buttonEmitter = new JButtonGenerator() {
+		@Override
+		public JButton newJButton(String title, Action action) {
+			JButton button = new JButton(title);
+			button.addActionListener(action);
+			return button;
+		}
+	};
+	private MenuBarBuilder menuBarBuilder = new MenuBarBuilder() {
+		JMenuBar menuBar = new JMenuBar();
+		JMenu menu = new JMenu("File");
+
+		@Override
+		public MenuBarBuilder addJMenuItem(String title, Action action) {
+			JMenuItem menuItem = new JMenuItem();
+			menuItem.setText(title);
+			menuItem.addActionListener(action);
+			menu.add(menuItem);
+			return this;
+		}
+
+		@Override
+		public JMenuBar build() {
+			menuBar.add(menu);
+			return menuBar;
+		}
+	};
 
 	public MainFrame() throws HeadlessException {
 		setTitle("JWeatherHistory");
@@ -29,7 +56,12 @@ public class MainFrame extends JFrame {
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
-		setJMenuBar(createMenuBar());
+		setJMenuBar(menuBarBuilder.addJMenuItem("Dummy", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				logger.info("Dummy performed");
+			}
+		}).build());
 
 		TableModel tableModel = new AbstractTableModel() {
 			java.util.List<WeatherEntry> entries = weatherHistoryService.getAllWeatherEntries();
@@ -72,7 +104,12 @@ public class MainFrame extends JFrame {
 		scrollPane.setBorder(BorderFactory.createTitledBorder("Weather Entries"));
 
 		JToolBar toolBar = new JToolBar("Weather Entry Actions", JToolBar.HORIZONTAL);
-		toolBar.add(new JButton("New Entry"));
+		toolBar.add(buttonEmitter.newJButton("New Entry", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				new WeatherEntryEditor(weatherHistoryService);
+			}
+		}));
 		toolBar.add(new JToolBar.Separator());
 
 		add(toolBar, BorderLayout.NORTH);
@@ -99,32 +136,7 @@ public class MainFrame extends JFrame {
 		tableColumnModel.addColumn(tableColumnGenerator.getTableColumn(2, "Description"));
 		tableColumnModel.addColumn(tableColumnGenerator.getTableColumn(3, "Date Captured"));
 
-
 		return tableColumnModel;
-	}
-
-	private JMenuBar createMenuBar() {
-		JMenuBar menuBar = new JMenuBar();
-		JMenu menu = new JMenu("File");
-
-		MenuBarBuilder menuBarBuilder = new MenuBarBuilder() {
-			@Override
-			public JMenuItem addMenuItem(String title, Action action) {
-				JMenuItem menuItem = new JMenuItem();
-				menuItem.setText(title);
-				menuItem.addActionListener(action);
-				return menuItem;
-			}
-		};
-
-		menu.add(menuBarBuilder.addMenuItem("Dummy", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				logger.info("" + actionEvent);
-			}
-		}));
-		menuBar.add(menu);
-		return menuBar;
 	}
 
 	interface TableColumnGenerator {
@@ -132,6 +144,12 @@ public class MainFrame extends JFrame {
 	}
 
 	private interface MenuBarBuilder {
-		JMenuItem addMenuItem(String title, Action action);
+		MenuBarBuilder addJMenuItem(String title, Action action);
+
+		JMenuBar build();
+	}
+
+	private interface JButtonGenerator {
+		JButton newJButton(String title, Action action);
 	}
 }

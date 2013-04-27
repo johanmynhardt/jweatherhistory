@@ -65,8 +65,6 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
 		try {
 			connection.setAutoCommit(false);
-			String entryDateFormat = simpleDateFormat.format(weatherEntry.getEntryDate());
-			String captureDateFormat = timestampFormat.format(weatherEntry.getCaptureDate());
 			Statement statement = connection.createStatement();
 			String SQL = format("INSERT INTO WEATHERENTRY (DESCRIPTION, ENTRY_DATE, CAPTURE_DATE) values ('%s', '%s', '%s')",
 					description, simpleDateFormat.format(weatherEntry.getEntryDate()), timestampFormat.format(weatherEntry.getCaptureDate()));
@@ -177,13 +175,9 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 				logger.info(metadata.getColumnName(i) + " | ");
 			}
 			while (resultSet.next()) {
-				for (int i = 1; i <= metadata.getColumnCount(); i++) {
-					logger.info(""+resultSet.getObject(i));
-				}
+				//TODO fetch rain entry and wind entry
 				WeatherEntry weatherEntry = new WeatherEntry(resultSet.getLong(1), resultSet.getString(2), resultSet.getDate(3), resultSet.getTimestamp(4), null, null);
 				results.add(weatherEntry);
-
-				logger.info("weatherEntry = " + weatherEntry);
 			}
 			return results;
 		} catch (SQLException e) {
