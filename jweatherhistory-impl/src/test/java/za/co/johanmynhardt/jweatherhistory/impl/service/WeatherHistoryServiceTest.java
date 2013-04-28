@@ -1,9 +1,5 @@
 package za.co.johanmynhardt.jweatherhistory.impl.service;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -24,16 +20,14 @@ public class WeatherHistoryServiceTest {
 	public void testCreateRainEntry() throws Exception {
 		WeatherHistoryService weatherHistoryService = new WeatherHistoryService();
 
-		RainEntry rainEntry = new RainEntry();
-		rainEntry.setVolume(10);
-		rainEntry.setDescription("Rain Entry description");
+		RainEntry rainEntry = new RainEntry(-1, 10, "Rain Entry description", null);
 
 		WindEntry windEntry = new WindEntry();
 		windEntry.setWindspeed(0);
 		windEntry.setWindDirection(WindDirection.NORTH);
 		windEntry.setDescription("Wind entry description");
 
-		WeatherEntry weathertry = weatherHistoryService.createWeatherEntry("WeatherEntry description", new Date(), rainEntry, windEntry);
+		WeatherEntry weathertry = weatherHistoryService.createWeatherEntry("WeatherEntry description", new Date(), 0, 0, rainEntry, windEntry);
 
 		logger.info("weathertry = " + weathertry);
 

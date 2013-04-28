@@ -62,13 +62,13 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 
 				switch (column) {
 					case 1:
-						return selectedEntry.getId();
+						return selectedEntry.id;
 					case 2:
-						return selectedEntry.getDescription();
+						return selectedEntry.description;
 					case 3:
-						return selectedEntry.getCaptureDate() == null ? null : selectedEntry.getCaptureDate();
+						return selectedEntry.captureDate == null ? null : selectedEntry.captureDate;
 					case 4:
-						return selectedEntry.getEntryDate() == null ? null : selectedEntry.getEntryDate();
+						return selectedEntry.entryDate == null ? null : selectedEntry.entryDate;
 					default:
 						return null;
 				}

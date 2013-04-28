@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 import java.util.logging.Logger;
 
 import org.junit.Test;
@@ -31,11 +32,11 @@ public class ModelTest {
 		connection.close();
 
 
-		WeatherEntry weatherEntry = new WeatherEntry();
+		WeatherEntry weatherEntry = new WeatherEntry(-1, "", new Date(), new Date(), 0, 0, null, null);
 
 		logger.info("weatherEntry = " + weatherEntry);
 
-		RainEntry rainEntry = new RainEntry();
+		RainEntry rainEntry = new RainEntry(-1, 0, "", weatherEntry);
 
 		logger.info("rainEntry = " + rainEntry);
 	}

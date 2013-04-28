@@ -29,7 +29,6 @@ public class WeatherEntryEditor extends JFrame {
 	JSpinner jSpinnerRainVolume = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1));
 	JTextArea taWindDescription = new JTextArea();
 	JTextArea taRainDescription = new JTextArea();
-
 	private UIBuilderService uiBuilderService = new UIBuilderService();
 
 
@@ -52,13 +51,13 @@ public class WeatherEntryEditor extends JFrame {
 		add(newTopTitledPanel("Date for Weather Entry", tfDate), new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
 		add(newTopTitledPanel("Min Temp", jSpinnerMin), new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
 		add(newTopTitledPanel("Max Temp", jSpinnerMax), new GridBagConstraints(1, 1, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
-		add(newTopTitledPanel("Weather Description",new JScrollPane(taDescription)), new GridBagConstraints(3, 0, 2, 2, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
+		add(newTopTitledPanel("Weather Description", new JScrollPane(taDescription)), new GridBagConstraints(3, 0, 2, 2, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
 
 		add(newTopTitledPanel("Select Wind Direction", windDirectionJComboBox), new GridBagConstraints(0, 2, 2, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
-		add(newTopTitledPanel("Set Rainfall",jSpinnerRainVolume), new GridBagConstraints(3, 2, 2, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
+		add(newTopTitledPanel("Set Rainfall", jSpinnerRainVolume), new GridBagConstraints(3, 2, 2, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
 
-		add(newTopTitledPanel("Wind Entry Description",new JScrollPane(taWindDescription)), new GridBagConstraints(0, 4, 2, 2, 1, 1, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
-		add(newTopTitledPanel("Rain Entry Description",new JScrollPane(taRainDescription)), new GridBagConstraints(3, 4, 2, 2, 1, 1, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
+		add(newTopTitledPanel("Wind Entry Description", new JScrollPane(taWindDescription)), new GridBagConstraints(0, 4, 2, 2, 1, 1, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
+		add(newTopTitledPanel("Rain Entry Description", new JScrollPane(taRainDescription)), new GridBagConstraints(3, 4, 2, 2, 1, 1, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 5, 5));
 
 		add(new JSeparator(JSeparator.HORIZONTAL), new GridBagConstraints(0, 6, 6, 1, 0, 1, GridBagConstraints.PAGE_END, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 5), 5, 5));
 
@@ -80,10 +79,7 @@ public class WeatherEntryEditor extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 				//TODO set entryDate
-				RainEntry rainEntry = new RainEntry();
-				rainEntry.setVolume((Integer) jSpinnerRainVolume.getValue());
-				rainEntry.setDescription(taRainDescription.getText());
-
+				RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
 				WindEntry windEntry = new WindEntry();
 				windEntry.setWindDirection((WindDirection) windDirectionJComboBox.getSelectedItem());
 				windEntry.setDescription(taWindDescription.getText());
@@ -98,7 +94,7 @@ public class WeatherEntryEditor extends JFrame {
 	}
 
 	public void saveNewWeatherEntry(String description, Date entryDate, RainEntry rainEntry, WindEntry windEntry) {
-		weatherHistoryService.createWeatherEntry(description, entryDate, rainEntry, windEntry);
+		weatherHistoryService.createWeatherEntry(description, entryDate, 0, 0, rainEntry, windEntry);
 	}
 
 	private JPanel newTopTitledPanel(String title, Component component) {
