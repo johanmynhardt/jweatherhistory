@@ -21,5 +21,16 @@
 			<artifactId>jweatherhistory-api</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.jgoodies</groupId>
+			<artifactId>jgoodies-common</artifactId>
+			<version>1.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jgoodies</groupId>
+			<artifactId>jgoodies-looks</artifactId>
+			<version>2.5.3</version>
+		</dependency>
+
 	</dependencies>
 </project>
