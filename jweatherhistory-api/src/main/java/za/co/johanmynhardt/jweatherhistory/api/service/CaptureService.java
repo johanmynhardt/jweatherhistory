@@ -15,4 +15,6 @@ public interface CaptureService {
 	WeatherEntry createWeatherEntry(String description, Date entryDate, int minimumTemperature, int maximumTemperature, RainEntry rainEntry, WindEntry windEntry);
 	RainEntry createRainEntry(String description, Integer volume, WeatherEntry weatherEntry);
 	WindEntry createWindEntry(String description, WindDirection direction, Integer windSpeed, WeatherEntry weatherEntry) throws SQLException;
+
+	WeatherEntry createWeatherEntry(WeatherEntry weatherEntry);
 }

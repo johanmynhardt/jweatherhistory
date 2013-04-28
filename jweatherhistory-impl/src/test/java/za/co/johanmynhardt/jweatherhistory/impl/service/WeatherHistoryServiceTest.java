@@ -22,10 +22,7 @@ public class WeatherHistoryServiceTest {
 
 		RainEntry rainEntry = new RainEntry(-1, 10, "Rain Entry description", null);
 
-		WindEntry windEntry = new WindEntry();
-		windEntry.setWindspeed(0);
-		windEntry.setWindDirection(WindDirection.NORTH);
-		windEntry.setDescription("Wind entry description");
+		WindEntry windEntry = new WindEntry(-1, "Wind entry description", WindDirection.NORTH, 0, null);
 
 		WeatherEntry weathertry = weatherHistoryService.createWeatherEntry("WeatherEntry description", new Date(), 0, 0, rainEntry, windEntry);
 

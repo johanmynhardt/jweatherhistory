@@ -4,7 +4,7 @@ package za.co.johanmynhardt.jweatherhistory.model;
  * @author Johan Mynhardt
  */
 public class RainEntry {
-	public final int id;
+	public final long id;
 	public final int volume;
 	public final String description;
 	private WeatherEntry weatherEntry;

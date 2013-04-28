@@ -69,6 +69,10 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 						return selectedEntry.captureDate == null ? null : selectedEntry.captureDate;
 					case 4:
 						return selectedEntry.entryDate == null ? null : selectedEntry.entryDate;
+					case 5:
+						return selectedEntry.minimumTemperature;
+					case 6:
+						return selectedEntry.maximumTemperature;
 					default:
 						return null;
 				}
@@ -112,6 +116,8 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		tableColumnModel.addColumn(builderService.getTableColumn(1, "ID"));
 		tableColumnModel.addColumn(builderService.getTableColumn(4, "Entry Date"));
 		tableColumnModel.addColumn(builderService.getTableColumn(2, "Description"));
+		tableColumnModel.addColumn(builderService.getTableColumn(5, "Minimum Temperature"));
+		tableColumnModel.addColumn(builderService.getTableColumn(6, "Maximum Temperature"));
 		tableColumnModel.addColumn(builderService.getTableColumn(3, "Date Captured"));
 
 		return tableColumnModel;
