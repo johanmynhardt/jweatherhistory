@@ -31,7 +31,7 @@ import static java.lang.String.format;
 public class WeatherHistoryService implements CaptureService, ReaderService, UpdateService {
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
 	private static final Logger logger = Logger.getLogger(WeatherHistoryService.class.getName());
-	private static SimpleDateFormat simpleDateFormat;
+	public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
 	private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static Connection connection;
 
@@ -43,7 +43,6 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
 
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
@@ -312,13 +311,16 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			connection.setAutoCommit(false);
 
 			PreparedStatement preparedStatement = connection.prepareStatement(
-					"UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ? where ID = ?"
+					"UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ?, " +
+							"ENTRY_DATE = ?" +
+							"WHERE ID = ?"
 			);
 
 			preparedStatement.setString(1, weatherEntry.description);
 			preparedStatement.setInt(2, weatherEntry.minimumTemperature);
 			preparedStatement.setInt(3, weatherEntry.maximumTemperature);
-			preparedStatement.setLong(4, weatherEntry.id);
+			preparedStatement.setDate(4, new java.sql.Date(weatherEntry.entryDate.getTime()));
+			preparedStatement.setLong(5, weatherEntry.id);
 			preparedStatement.executeUpdate();
 
 			preparedStatement = connection.prepareStatement(

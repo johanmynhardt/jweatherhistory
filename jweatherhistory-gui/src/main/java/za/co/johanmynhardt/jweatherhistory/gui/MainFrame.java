@@ -48,6 +48,12 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
 	public MainFrame() throws HeadlessException {
+		//http://findicons.com/files/icons/2130/aluminum/59/weather.png
+		try {
+			setIconImage(new ImageIcon(MainFrame.class.getResource("/icons/weather.png")).getImage());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		setTitle("JWeatherHistory");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(700, 400);

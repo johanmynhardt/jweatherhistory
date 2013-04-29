@@ -2,6 +2,7 @@ package za.co.johanmynhardt.jweatherhistory.gui;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -15,6 +16,8 @@ import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
 import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
+
+import static java.lang.String.format;
 
 /**
  * @author Johan Mynhardt
@@ -69,6 +72,7 @@ public class WeatherEntryEditor extends JFrame {
 
 	private void buildGrid() {
 		setLayout(new GridBagLayout());
+		tfDate.setToolTipText(format("Format: %s (eg: %s)", WeatherHistoryService.DATE_FORMAT, WeatherHistoryService.simpleDateFormat.format(new java.util.Date())));
 		add(uiBuilderService.newTopTitledPanel("Date for Weather Entry", tfDate), new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
 		add(uiBuilderService.newTopTitledPanel("Min Temp", jSpinnerMin), new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
 		add(uiBuilderService.newTopTitledPanel("Max Temp", jSpinnerMax), new GridBagConstraints(1, 1, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
@@ -101,30 +105,34 @@ public class WeatherEntryEditor extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 				//TODO use databinding?
-				if (weatherEntry != null) {
-					RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry.id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-					WindEntry windEntry = new WindEntry(weatherEntry.windEntry.id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
-					WeatherEntry updateWeatherEntry = new WeatherEntry(
-							weatherEntry.id,
-							taDescription.getText(),
-							new java.util.Date(),
-							new Date(),
-							((Integer) jSpinnerMin.getValue()),
-							((Integer) jSpinnerMax.getValue()),
-							windEntry,
-							rainEntry
-					);
-					weatherHistoryService.updateFromEdit(updateWeatherEntry);
-					entryListener.updateItems();
-					dispose();
-				} else {
-					//TODO set entryDate
-					RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-					WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
-					WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), new java.util.Date(), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
-					weatherHistoryService.createWeatherEntry(weatherEntry);
-					entryListener.updateItems();
-					dispose();
+				try {
+					if (weatherEntry != null) {
+						RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry.id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(weatherEntry.windEntry.id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						WeatherEntry updateWeatherEntry = new WeatherEntry(
+								weatherEntry.id,
+								taDescription.getText(),
+								WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()),
+								new Date(),
+								((Integer) jSpinnerMin.getValue()),
+								((Integer) jSpinnerMax.getValue()),
+								windEntry,
+								rainEntry
+						);
+						weatherHistoryService.updateFromEdit(updateWeatherEntry);
+						entryListener.updateItems();
+						dispose();
+					} else {
+						RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
+						weatherHistoryService.createWeatherEntry(weatherEntry);
+						entryListener.updateItems();
+						dispose();
+
+					}
+				} catch (ParseException e) {
+					e.printStackTrace();
 				}
 			}
 		}));
