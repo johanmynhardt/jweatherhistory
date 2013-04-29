@@ -309,7 +309,6 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 	public WeatherEntry updateFromEdit(WeatherEntry weatherEntry) {
 		try {
 			connection.setAutoCommit(false);
-
 			PreparedStatement preparedStatement = connection.prepareStatement(
 					"UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ?, " +
 							"ENTRY_DATE = ?" +
@@ -342,9 +341,11 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			preparedStatement.executeUpdate();
 
 			connection.commit();
+			connection.setAutoCommit(true);
 		} catch (SQLException e) {
 			try {
 				connection.rollback();
+				connection.setAutoCommit(true);
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
