@@ -9,7 +9,7 @@ public class RainEntry {
 	public final String description;
 	private WeatherEntry weatherEntry;
 
-	public RainEntry(int id, int volume, String description, WeatherEntry weatherEntry) {
+	public RainEntry(long id, int volume, String description, WeatherEntry weatherEntry) {
 		this.id = id;
 		this.volume = volume;
 		this.description = description;

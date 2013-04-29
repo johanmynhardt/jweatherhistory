@@ -305,4 +305,50 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 		}
 		return weatherEntry;
 	}
+
+	@Override
+	public WeatherEntry updateFromEdit(WeatherEntry weatherEntry) {
+		try {
+			connection.setAutoCommit(false);
+
+			PreparedStatement preparedStatement = connection.prepareStatement(
+					"UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ? where ID = ?"
+			);
+
+			preparedStatement.setString(1, weatherEntry.description);
+			preparedStatement.setInt(2, weatherEntry.minimumTemperature);
+			preparedStatement.setInt(3, weatherEntry.maximumTemperature);
+			preparedStatement.setLong(4, weatherEntry.id);
+			preparedStatement.executeUpdate();
+
+			preparedStatement = connection.prepareStatement(
+					"UPDATE WINDENTRY SET DESCRIPTION = ?, WINDDIRECTION = ?, WINDSPEED = ? WHERE ID = ?"
+			);
+
+			preparedStatement.setString(1, weatherEntry.windEntry.description);
+			preparedStatement.setString(2, weatherEntry.windEntry.windDirection.name());
+			preparedStatement.setInt(3, weatherEntry.windEntry.windspeed);
+			preparedStatement.setLong(4, weatherEntry.windEntry.id);
+			preparedStatement.executeUpdate();
+
+			preparedStatement = connection.prepareStatement(
+					"UPDATE RAINENTRY SET DESCRIPTION = ?, VOLUME = ? WHERE ID = ?"
+			);
+			preparedStatement.setString(1, weatherEntry.rainEntry.description);
+			preparedStatement.setInt(2, weatherEntry.rainEntry.volume);
+			preparedStatement.setLong(3, weatherEntry.rainEntry.id);
+			preparedStatement.executeUpdate();
+
+			connection.commit();
+		} catch (SQLException e) {
+			try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		}
+
+		return weatherEntry;
+	}
 }

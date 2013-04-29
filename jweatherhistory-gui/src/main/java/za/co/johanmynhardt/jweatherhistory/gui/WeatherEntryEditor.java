@@ -23,6 +23,7 @@ public class WeatherEntryEditor extends JFrame {
 	private final Logger logger = Logger.getLogger(WeatherEntryEditor.class.getName());
 	private final WeatherHistoryService weatherHistoryService;
 	private final WeatherEntryListener entryListener;
+	private final WeatherEntry weatherEntry;
 	JTextField tfDate = new JTextField();
 	JSpinner jSpinnerMin = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
 	JSpinner jSpinnerMax = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
@@ -35,7 +36,7 @@ public class WeatherEntryEditor extends JFrame {
 	private UIBuilderService uiBuilderService = new UIBuilderService();
 
 
-	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener, WeatherEntry ... selectedItem) throws HeadlessException {
+	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener, WeatherEntry... selectedItem) throws HeadlessException {
 		this.weatherHistoryService = weatherHistoryService;
 		this.entryListener = listener;
 		setTitle("Add/Edit WeatherEntry");
@@ -48,8 +49,8 @@ public class WeatherEntryEditor extends JFrame {
 		setLocationRelativeTo(null);
 		setVisible(true);
 
-		if (selectedItem.length >0) {
-			WeatherEntry weatherEntry = selectedItem[0];
+		if (selectedItem.length > 0) {
+			weatherEntry = selectedItem[0];
 			logger.info("Editing " + ToStringBuilder.reflectionToString(selectedItem[0], ToStringStyle.MULTI_LINE_STYLE));
 			//TODO use format string
 			tfDate.setText(weatherEntry.entryDate.toString());
@@ -61,6 +62,8 @@ public class WeatherEntryEditor extends JFrame {
 			jSpinnerRainVolume.setValue(weatherEntry.rainEntry.volume);
 			taWindDescription.setText(weatherEntry.windEntry.description);
 			taRainDescription.setText(weatherEntry.rainEntry.description);
+		} else {
+			weatherEntry = null;
 		}
 	}
 
@@ -97,13 +100,32 @@ public class WeatherEntryEditor extends JFrame {
 		buttonPanel.add(uiBuilderService.newJButton("OK", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				//TODO set entryDate
-				RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-				WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer)jSpinnerWindSpeed.getValue(), null);
-				WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), new java.util.Date(), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
-				weatherHistoryService.createWeatherEntry(weatherEntry);
-				entryListener.updateItems();
-				dispose();
+				//TODO use databinding?
+				if (weatherEntry != null) {
+					RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry.id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+					WindEntry windEntry = new WindEntry(weatherEntry.windEntry.id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+					WeatherEntry updateWeatherEntry = new WeatherEntry(
+							weatherEntry.id,
+							taDescription.getText(),
+							new java.util.Date(),
+							new Date(),
+							((Integer) jSpinnerMin.getValue()),
+							((Integer) jSpinnerMax.getValue()),
+							windEntry,
+							rainEntry
+					);
+					weatherHistoryService.updateFromEdit(updateWeatherEntry);
+					entryListener.updateItems();
+					dispose();
+				} else {
+					//TODO set entryDate
+					RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+					WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+					WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), new java.util.Date(), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
+					weatherHistoryService.createWeatherEntry(weatherEntry);
+					entryListener.updateItems();
+					dispose();
+				}
 			}
 		}));
 		cancelSavePanel.add(buttonPanel, BorderLayout.EAST);
