@@ -19,6 +19,8 @@ import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 
+import static java.lang.String.format;
+
 /**
  * @author Johan Mynhardt
  */
@@ -48,11 +50,11 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
 	public MainFrame() throws HeadlessException {
-		//http://findicons.com/files/icons/2130/aluminum/59/weather.png
 		try {
+			//http://findicons.com/files/icons/2130/aluminum/59/weather.png
 			setIconImage(new ImageIcon(MainFrame.class.getResource("/icons/weather.png")).getImage());
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.warning(format("Could not set icon image. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
 		}
 		setTitle("JWeatherHistory");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

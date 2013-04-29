@@ -48,7 +48,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			@Override
 			public void run() {
 				try {
-					System.err.println("Closing connection " + connection);
+					logger.warning("Closing connection " + connection);
 					connection.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
@@ -76,7 +76,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 	@Override
 	public WeatherEntry createWeatherEntry(WeatherEntry weatherEntry) {
 		logger.info("Creating weatherEntry");
-		logger.info(weatherEntry.toString());
+		logger.fine(weatherEntry.toString());
 
 		try {
 			connection.setAutoCommit(false);
@@ -94,7 +94,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
 			ResultSet resultSet = preparedStatement.getGeneratedKeys();
 			int generatedId = resultSet.next() ? resultSet.getInt(1) : -1;
-			logger.info("GeneratedId: " + generatedId);
+			logger.finer("GeneratedId: " + generatedId);
 
 			weatherEntry = new WeatherEntry(
 					generatedId,
@@ -169,10 +169,10 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
 			ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
 			RainEntry rainEntry = new RainEntry(generatedKeys.next() ? generatedKeys.getInt(1) : -1, volume, description, weatherEntry);
-			logger.info("RainEntry created: " + rainEntry);
+			logger.fine("RainEntry created: " + rainEntry);
 			return rainEntry;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.warning(format("Could not create RainEntry. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
 		}
 		return null;
 	}
@@ -213,7 +213,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			Statement statement = connection.createStatement();
 			String QUERY = format("SELECT * FROM WEATHERENTRY");
 			ResultSet resultSet = statement.executeQuery(QUERY);
-			printResultSetMetaData(resultSet.getMetaData());
+			//printResultSetMetaData(resultSet.getMetaData());
 
 			List<WeatherEntry> results = new ArrayList<>();
 			while (resultSet.next()) {
@@ -235,7 +235,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
 				stringBuilder.append(i).append(". ").append(resultSetMetaData.getColumnName(i)).append(" | ");
 			}
-			logger.info("Columns: " + stringBuilder.toString());
+			logger.finest("Columns: " + stringBuilder.toString());
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -268,7 +268,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			if (!resultSet.next()) throw new RuntimeException("Unexpected state.");
 			return new RainEntry(resultSet.getInt("ID"), resultSet.getInt("VOLUME"), resultSet.getString("DESCRIPTION"), null);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.warning(format("Could not retrieve RainEntry. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
 		}
 		return null;
 	}
@@ -289,7 +289,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			connection.commit();
 			return weatherEntry;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.warning(format("Could not update WeatherEntry. (%s: %s) Rolling back.", e.getClass().getSimpleName(), e.getMessage()));
 			try {
 				connection.rollback();
 			} catch (SQLException e1) {

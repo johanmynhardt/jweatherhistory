@@ -3,6 +3,7 @@ package za.co.johanmynhardt.jweatherhistory.gui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -54,8 +55,7 @@ public class WeatherEntryEditor extends JFrame {
 
 		if (selectedItem.length > 0) {
 			weatherEntry = selectedItem[0];
-			logger.info("Editing " + ToStringBuilder.reflectionToString(selectedItem[0], ToStringStyle.MULTI_LINE_STYLE));
-			//TODO use format string
+			logger.fine("Editing " + ToStringBuilder.reflectionToString(selectedItem[0], ToStringStyle.MULTI_LINE_STYLE));
 			tfDate.setText(weatherEntry.entryDate.toString());
 			jSpinnerMin.setValue(weatherEntry.minimumTemperature);
 			jSpinnerMax.setValue(weatherEntry.maximumTemperature);
@@ -96,7 +96,7 @@ public class WeatherEntryEditor extends JFrame {
 		buttonPanel.add(uiBuilderService.newJButton("Cancel", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				logger.info("Disposing of WeatherEntryEditor.");
+				logger.finest("Disposing of WeatherEntryEditor.");
 				dispose();
 			}
 		}));
@@ -132,7 +132,7 @@ public class WeatherEntryEditor extends JFrame {
 
 					}
 				} catch (ParseException e) {
-					e.printStackTrace();
+					logger.severe(format("%s: %s\n%s", e.getClass().getSimpleName(), e.getMessage(), Arrays.toString(e.getStackTrace())));
 				}
 			}
 		}));

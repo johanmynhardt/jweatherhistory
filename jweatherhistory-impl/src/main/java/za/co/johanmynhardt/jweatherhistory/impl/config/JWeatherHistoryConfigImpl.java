@@ -56,13 +56,13 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 				e.printStackTrace();
 			}
 		} else {
-			logger.info("Found Derby DB!");
+			logger.info("Found Derby DB at " + getDbPath());
 		}
 	}
 
 	private boolean runSQL() throws SQLException, URISyntaxException, IOException {
 		Connection connection = DriverManager.getConnection(getConnectionUrl());
-		logger.warning("Got connection: " + connection);
+		logger.info("Got connection: " + connection);
 
 		Statement statement = connection.createStatement();
 
