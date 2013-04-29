@@ -12,9 +12,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
+import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
 import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
 import za.co.johanmynhardt.jweatherhistory.api.service.UpdateService;
+import za.co.johanmynhardt.jweatherhistory.impl.config.JWeatherHistoryConfigImpl;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
@@ -34,7 +36,9 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
 	static {
 		try {
-			connection = DriverManager.getConnection("jdbc:derby:/tmp/weatherhistory");
+			JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
+			config.bootstrap();
+			connection = DriverManager.getConnection(config.getConnectionUrl());
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
