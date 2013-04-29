@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
@@ -27,8 +29,21 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	private final UIBuilderService builderService = new UIBuilderService();
 
 	java.util.List<WeatherEntry> entries = new ArrayList<>();
-	JTable jTable;
+	JTable jTable = new JTable();
 	TableModel tableModel;
+
+	JButton jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			new WeatherEntryEditor(weatherHistoryService, MainFrame.this);
+		}
+	});
+	JButton jbuttonEditEntry = builderService.newJButton("Edit Entry", new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			new WeatherEntryEditor(weatherHistoryService, MainFrame.this, entries.get(jTable.getSelectedRow()));
+		}
+	});
 
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
@@ -79,25 +94,30 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 			}
 		};
 
-		TableColumnModel tableColumnModel = new DefaultTableColumnModel();
-		tableColumnModel.addColumn(new TableColumn());
+		TableColumnModel tableColumnModel = createTableColumnModel();
 
-		jTable = new JTable(tableModel, createTableColumnModel());
+		jTable = new JTable(tableModel, tableColumnModel);
+		DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
+		selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		selectionModel.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent listSelectionEvent) {
+				if (!listSelectionEvent.getValueIsAdjusting()) {
+					jbuttonEditEntry.setEnabled(true);
+				}
+			}
+		});
+		jTable.setSelectionModel(selectionModel);
 
 		JScrollPane scrollPane = new JScrollPane(jTable);
 		scrollPane.setBorder(BorderFactory.createTitledBorder("Weather Entries"));
 
 		JToolBar toolBar = new JToolBar("Weather Entry Actions", JToolBar.HORIZONTAL);
-		toolBar.add(builderService.newJButton("New Entry", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				new WeatherEntryEditor(weatherHistoryService, MainFrame.this);
-			}
-		}));
+		toolBar.add(jButtonNewEntry);
+		jbuttonEditEntry.setEnabled(false);
+		toolBar.add(jbuttonEditEntry);
 		toolBar.add(new JToolBar.Separator());
-
 		add(toolBar, BorderLayout.NORTH);
-
 		add(scrollPane, BorderLayout.CENTER);
 
 		setVisible(true);
@@ -108,6 +128,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	public void updateItems() {
 		entries = weatherHistoryService.getAllWeatherEntries();
 		((AbstractTableModel)tableModel).fireTableDataChanged();
+		jbuttonEditEntry.setEnabled(false);
 	}
 
 	private TableColumnModel createTableColumnModel() {

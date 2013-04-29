@@ -6,8 +6,9 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
@@ -34,7 +35,7 @@ public class WeatherEntryEditor extends JFrame {
 	private UIBuilderService uiBuilderService = new UIBuilderService();
 
 
-	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener) throws HeadlessException {
+	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener, WeatherEntry ... selectedItem) throws HeadlessException {
 		this.weatherHistoryService = weatherHistoryService;
 		this.entryListener = listener;
 		setTitle("Add/Edit WeatherEntry");
@@ -46,6 +47,21 @@ public class WeatherEntryEditor extends JFrame {
 
 		setLocationRelativeTo(null);
 		setVisible(true);
+
+		if (selectedItem.length >0) {
+			WeatherEntry weatherEntry = selectedItem[0];
+			logger.info("Editing " + ToStringBuilder.reflectionToString(selectedItem[0], ToStringStyle.MULTI_LINE_STYLE));
+			//TODO use format string
+			tfDate.setText(weatherEntry.entryDate.toString());
+			jSpinnerMin.setValue(weatherEntry.minimumTemperature);
+			jSpinnerMax.setValue(weatherEntry.maximumTemperature);
+			taDescription.setText(weatherEntry.description);
+			windDirectionJComboBox.setSelectedItem(weatherEntry.windEntry.windDirection);
+			jSpinnerWindSpeed.setValue(weatherEntry.windEntry.windspeed);
+			jSpinnerRainVolume.setValue(weatherEntry.rainEntry.volume);
+			taWindDescription.setText(weatherEntry.windEntry.description);
+			taRainDescription.setText(weatherEntry.rainEntry.description);
+		}
 	}
 
 	private void buildGrid() {

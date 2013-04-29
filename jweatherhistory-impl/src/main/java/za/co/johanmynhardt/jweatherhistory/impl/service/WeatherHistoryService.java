@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -213,13 +214,13 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			Statement statement = connection.createStatement();
 			String QUERY = format("SELECT * FROM WEATHERENTRY");
 			ResultSet resultSet = statement.executeQuery(QUERY);
+			printResultSetMetaData(resultSet.getMetaData());
 
 			List<WeatherEntry> results = new ArrayList<>();
 			while (resultSet.next()) {
-				//TODO fetch rain entry and wind entry
-				//TODO fetch temperature
-				WeatherEntry weatherEntry = new WeatherEntry(resultSet.getLong(1), resultSet.getString(2), resultSet.getDate(5), resultSet.getTimestamp(6), resultSet.getInt(3), resultSet.getInt(4), null, null);
-
+				WindEntry windEntry = getWindEntry(resultSet.getInt(7));
+				RainEntry rainEntry = getRainEntry(resultSet.getInt(8));
+				WeatherEntry weatherEntry = new WeatherEntry(resultSet.getLong(1), resultSet.getString(2), resultSet.getDate(5), resultSet.getTimestamp(6), resultSet.getInt(3), resultSet.getInt(4), windEntry, rainEntry);
 				results.add(weatherEntry);
 			}
 			return results;
@@ -227,6 +228,50 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 			e.printStackTrace();
 		}
 		return new ArrayList<>();
+	}
+
+	private void printResultSetMetaData(ResultSetMetaData resultSetMetaData) {
+		try {
+			StringBuilder stringBuilder = new StringBuilder();
+			for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+				stringBuilder.append(i).append(". ").append(resultSetMetaData.getColumnName(i)).append(" | ");
+			}
+			logger.info("Columns: " + stringBuilder.toString());
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public WindEntry getWindEntry(int id) {
+
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM WINDENTRY WHERE ID = ?");
+			statement.setInt(1, id);
+
+			ResultSet resultSet = statement.executeQuery();
+			if (!resultSet.next()) throw new RuntimeException("Unexpected state.");
+			//1. ID | 2. DESCRIPTION | 3. WINDDIRECTION | 4. WINDSPEED | 5. WEATHERENTRY_ID |
+			return new WindEntry(resultSet.getLong("ID"), resultSet.getString("DESCRIPTION"), WindDirection.valueOf(resultSet.getString("WINDDIRECTION")), resultSet.getInt("WINDSPEED"), null);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
+	public RainEntry getRainEntry(int id) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM RAINENTRY WHERE ID = ?");
+			statement.setInt(1, id);
+
+			ResultSet resultSet = statement.executeQuery();
+			if (!resultSet.next()) throw new RuntimeException("Unexpected state.");
+			return new RainEntry(resultSet.getInt("ID"), resultSet.getInt("VOLUME"), resultSet.getString("DESCRIPTION"), null);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	@Override
