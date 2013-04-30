@@ -29,6 +29,11 @@
 		</dependency>
 	</dependencies>
 
+	<scm>
+		<connection>git://github.com/johanmynhardt/jweatherhistory.git</connection>
+		<developerConnection>scm:git:git@github.com:johanmynhardt/jweatherhistory.git</developerConnection>
+	</scm>
+
 	<build>
 		<pluginManagement>
 			<plugins>
