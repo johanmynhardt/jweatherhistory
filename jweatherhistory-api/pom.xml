@@ -4,11 +4,10 @@
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>za.co.johanmynhardt</groupId>
+		<groupId>za.co.johanmynhardt.jweatherhistory</groupId>
 		<artifactId>jweatherhistory</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<groupId>za.co.johanmynhardt.jweatherhistory</groupId>
 	<artifactId>jweatherhistory-api</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>jweatherhistory-api</name>
