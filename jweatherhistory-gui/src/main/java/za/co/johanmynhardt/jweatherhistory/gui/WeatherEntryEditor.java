@@ -55,7 +55,7 @@ public class WeatherEntryEditor extends JFrame {
 
 		if (selectedItem.length > 0) {
 			weatherEntry = selectedItem[0];
-			logger.fine("Editing " + ToStringBuilder.reflectionToString(selectedItem[0], ToStringStyle.MULTI_LINE_STYLE));
+			logger.fine("Editing " + weatherEntry);
 			tfDate.setText(weatherEntry.entryDate.toString());
 			jSpinnerMin.setValue(weatherEntry.minimumTemperature);
 			jSpinnerMax.setValue(weatherEntry.maximumTemperature);

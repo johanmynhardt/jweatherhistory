@@ -13,14 +13,13 @@ import com.jgoodies.looks.plastic.theme.LightGray;
 public class JWeatherHistoryUI {
 	private static Logger logger = Logger.getLogger(JWeatherHistoryUI.class.getName());
 	public static void main(String[] args) {
+		System.out.println("Setting up logger...");
+		try {
+			LogManager.getLogManager().readConfiguration(JWeatherHistoryUI.class.getResourceAsStream("/logging.properties"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			@Override
-			public void run() {
-				logger.info("----------------------------------------");
-				logger.info("Shutting down at " + new Date());
-			}
-		}));
 
 		try {
 			PlasticLookAndFeel plasticLookAndFeel = new PlasticLookAndFeel();
@@ -29,16 +28,18 @@ public class JWeatherHistoryUI {
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
-		try {
-			LogManager.getLogManager().readConfiguration(JWeatherHistoryUI.class.getResourceAsStream("/logging.properties"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
 
 		logger.info("----------------------------------------");
 		logger.info("Starting at " + new Date());
 		logger.finest("Launching JWeatherHistoryUI...");
 		new MainFrame();
-
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				logger.info("----------------------------------------");
+				logger.info("Shutting down at " + new Date());
+			}
+		}));
 	}
 }

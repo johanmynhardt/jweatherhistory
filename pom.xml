@@ -12,6 +12,7 @@
 		<module>jweatherhistory-api</module>
 		<module>jweatherhistory-impl</module>
 		<module>jweatherhistory-gui</module>
+		<module>jweatherhistory-run</module>
 	</modules>
 
 	<dependencies>
@@ -43,4 +44,12 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>build-server</id>
+			<name>build-server</name>
+			<url>file:/opt/maven/maven2</url>
+		</repository>
+	</distributionManagement>
 </project>
