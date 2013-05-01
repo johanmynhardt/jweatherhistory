@@ -8,6 +8,7 @@ DIST_DIR=jweatherhistory-dist
 LIB_DIR=$DIST_DIR/lib
 START_SCRIPT=$DIST_DIR/jweatherhistory.sh
 
+rm -rf $DIST_DIR;
 mkdir -p $LIB_DIR;
 
 for i in $(find . -iname jweather*.jar); do cp $i $LIB_DIR/; done;
