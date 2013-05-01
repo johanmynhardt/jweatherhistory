@@ -38,7 +38,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 	static {
 		try {
 			JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
-			config.bootstrap();
+			config.bootstrapSQL();
 			connection = DriverManager.getConnection(config.getConnectionUrl());
 		} catch (SQLException e) {
 			logger.severe(format("Could not bootstrap Derby DB successfully. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));

@@ -48,7 +48,7 @@ public class JWeatherHistoryConfigImplTest {
 		}
 
 		try {
-			config.bootstrap();
+			config.bootstrapSQL();
 		} catch (java.sql.SQLException e) {
 			e.printStackTrace();
 			fail(e.toString());

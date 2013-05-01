@@ -1,6 +1,12 @@
 package za.co.johanmynhardt.jweatherhistory.impl.config;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -10,6 +16,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
@@ -55,7 +62,7 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 	}
 
 	@Override
-	public void bootstrap() throws SQLException {
+	public void bootstrapSQL() throws SQLException {
 		if (!getDbDir().toFile().exists()) {
 			logger.info(format("Creating DB directory: %s", getDbDir()));
 			if (!getDbDir().toFile().mkdirs()) throw new RuntimeException("Could not create directory " + getDbDir());
@@ -75,6 +82,18 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 		}
 	}
 
+	@Override
+	public void bootstrapLog() {
+		System.out.println("Setting up logger...");
+		try {
+			if (Files.notExists(getConfigPath()) && Files.notExists(Files.createDirectory(getConfigPath())))
+				throw new IOException("Could not set up config path.");
+			LogManager.getLogManager().readConfiguration(JWeatherHistoryConfig.class.getResourceAsStream("/logging.properties"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private boolean runSQL() throws SQLException, URISyntaxException, IOException {
 		Connection connection = DriverManager.getConnection(getConnectionUrl());
 		logger.info("Got connection: " + connection);
@@ -82,9 +101,15 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 		Statement statement = connection.createStatement();
 
 		StringBuilder stringBuilder = new StringBuilder();
-		for (String line : Files.readAllLines(
-				Paths.get(JWeatherHistoryConfigImpl.class.getResource("/sql/weatherhistory.sql").toURI()),
-				Charset.forName("UTF-8"))) {
+		logger.info("Loading /sql/weatherhistory.sql");
+		BufferedReader bufferedReader = new BufferedReader(
+				new InputStreamReader(
+						JWeatherHistoryConfig.class.getResourceAsStream("/sql/weatherhistory.sql")
+				)
+		);
+
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
 			stringBuilder.append(line).append("\n");
 		}
 

@@ -9,8 +9,6 @@ import java.util.logging.Logger;
 
 import javax.swing.*;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
