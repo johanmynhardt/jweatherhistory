@@ -9,16 +9,14 @@ import javax.swing.*;
 
 import com.jgoodies.looks.plastic.PlasticLookAndFeel;
 import com.jgoodies.looks.plastic.theme.LightGray;
+import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
+import za.co.johanmynhardt.jweatherhistory.impl.config.JWeatherHistoryConfigImpl;
 
 public class JWeatherHistoryUI {
 	private static Logger logger = Logger.getLogger(JWeatherHistoryUI.class.getName());
 	public static void main(String[] args) {
-		System.out.println("Setting up logger...");
-		try {
-			LogManager.getLogManager().readConfiguration(JWeatherHistoryUI.class.getResourceAsStream("/logging.properties"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
+		config.bootstrapLog();
 
 
 		try {

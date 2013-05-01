@@ -14,5 +14,6 @@ public interface JWeatherHistoryConfig {
 	public Path getDbPath();
 	public Path getDbDir();
 	public String getConnectionUrl();
-	public void bootstrap() throws SQLException;
+	public void bootstrapLog();
+	public void bootstrapSQL() throws SQLException;
 }
