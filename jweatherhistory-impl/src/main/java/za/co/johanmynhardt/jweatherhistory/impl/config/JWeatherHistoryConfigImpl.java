@@ -23,16 +23,30 @@ import static java.lang.String.format;
  * @author Johan Mynhardt
  */
 public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
+	private final String workingDirectory;
 	Logger logger = Logger.getLogger(JWeatherHistoryConfigImpl.class.getName());
 
+	public JWeatherHistoryConfigImpl(boolean testing) {
+		workingDirectory = workingDirectory(testing);
+	}
+
+	public JWeatherHistoryConfigImpl() {
+		this(false);
+	}
+
 	@Override
-	public Path getDbPath() {
-		return Paths.get(format("%s%s%s%s%sdb%s%s", System.getProperty("user.home"), SEPARATOR, DB_DIR, SEPARATOR, SEPARATOR, SEPARATOR, DB_NAME));
+	public Path getConfigPath() {
+		return Paths.get(format("%s%s%s", workingDirectory, SEPARATOR, CONFIG_DIR));
 	}
 
 	@Override
 	public Path getDbDir() {
-		return Paths.get(format("%s%s%s%s%sdb", System.getProperty("user.home"), SEPARATOR, DB_DIR, SEPARATOR, SEPARATOR));
+		return Paths.get(format("%s%sdb", getConfigPath(), SEPARATOR));
+	}
+
+	@Override
+	public Path getDbPath() {
+		return Paths.get(format("%s%sdb%s%s", getConfigPath(), SEPARATOR, SEPARATOR, DB_NAME));
 	}
 
 	@Override
@@ -41,18 +55,19 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 	}
 
 	@Override
-	public void bootstrap() {
+	public void bootstrap() throws SQLException {
 		if (!getDbDir().toFile().exists()) {
-			logger.info("Creating DB directory: %s" + getDbDir());
+			logger.info(format("Creating DB directory: %s", getDbDir()));
 			if (!getDbDir().toFile().mkdirs()) throw new RuntimeException("Could not create directory " + getDbDir());
-			logger.info("Created directory " + getDbDir());
+			logger.info("Directory created successfully: " + getDbDir());
 		}
 
 		if (!getDbPath().toFile().exists()) {
 			logger.info("Bootstrapping Derby DB...");
 			try {
 				runSQL();
-			} catch (SQLException | IOException | URISyntaxException e) {
+			} catch (IOException | URISyntaxException e) {
+				logger.severe(format("Could not bootstrap the Derby DB! (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
 				e.printStackTrace();
 			}
 		} else {
@@ -84,5 +99,17 @@ public class JWeatherHistoryConfigImpl implements JWeatherHistoryConfig {
 		logger.warning("Derby initialising complete!");
 		connection.close();
 		return true;
+	}
+
+	private String workingDirectory(boolean testing) {
+		String directory = System.getProperty("user.home");
+		if (testing) {
+			try {
+				directory = Files.createTempDirectory("jweather").toString();
+			} catch (IOException e) {
+				directory = "/tmp";
+			}
+		}
+		return directory;
 	}
 }
