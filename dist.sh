@@ -4,7 +4,7 @@ DERBY_VERSION=10.9.1.0
 DERBY_JAR=derby-$DERBY_VERSION.jar
 M2_HOME=$HOME/.m2
 M2_REPO=$M2_HOME/repository
-DIST_DIR=dist
+DIST_DIR=jweatherhistory-dist
 LIB_DIR=$DIST_DIR/lib
 START_SCRIPT=$DIST_DIR/jweatherhistory.sh
 
@@ -20,3 +20,5 @@ java -cp \"lib/*\" za.co.johanmynhardt.jweatherhistory.gui.JWeatherHistoryUI\
 " | tee $START_SCRIPT
 
 chmod a+x $START_SCRIPT
+
+tar jcvf jweatherhistory.tar.bz2 $DIST_DIR

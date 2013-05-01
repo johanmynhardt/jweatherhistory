@@ -3,3 +3,5 @@
 target/
 derby.log
 dist/
+jweatherhistory-dist/
+jweatherhistory.tar.bz2
