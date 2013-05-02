@@ -48,6 +48,8 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
+	WeatherEntryDisplayPanel weatherEntryDisplayPanel = new WeatherEntryDisplayPanel();
+
 	public MainFrame() throws HeadlessException {
 		try {
 			//http://findicons.com/files/icons/2130/aluminum/59/weather.png
@@ -112,6 +114,10 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 				if (!listSelectionEvent.getValueIsAdjusting()) {
 					jbuttonEditEntry.setEnabled(true);
 				}
+
+				if (jTable.getSelectedRow() >= 0) {
+					weatherEntryDisplayPanel.displayWeatherEntry(entries.get(jTable.getSelectedRow()));
+				}
 			}
 		});
 		jTable.setSelectionModel(selectionModel);
@@ -126,6 +132,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		toolBar.add(new JToolBar.Separator());
 		add(toolBar, BorderLayout.NORTH);
 		add(scrollPane, BorderLayout.CENTER);
+		add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
 
 		setVisible(true);
 		updateItems();
