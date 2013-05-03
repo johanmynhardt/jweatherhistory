@@ -3,9 +3,16 @@ package za.co.johanmynhardt.jweatherhistory.gui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import javax.swing.*;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -28,11 +35,10 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	private final WeatherHistoryService weatherHistoryService = new WeatherHistoryService();
 	private final Logger logger = Logger.getLogger(MainFrame.class.getName());
 	private final UIBuilderService builderService = new UIBuilderService();
-
 	java.util.List<WeatherEntry> entries = new ArrayList<>();
+	java.util.List<YearItem> yearList = new ArrayList<>();
 	JTable jTable = new JTable();
 	TableModel tableModel;
-
 	JButton jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
@@ -45,10 +51,44 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 			new WeatherEntryEditor(weatherHistoryService, MainFrame.this, entries.get(jTable.getSelectedRow()));
 		}
 	});
+	YearItem selectedYear = new YearItem(-1, "All Time");
+	JComboBox<YearItem> yearSelector = new JComboBox<>(new ComboBoxModel<YearItem>() {
+		//TODO: Clean this model up.
+		Set<ListDataListener> listDataListeners = new HashSet<>();
 
-	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
+		@Override
+		public Object getSelectedItem() {
+			return selectedYear;
+		}
 
+		@Override
+		public void setSelectedItem(Object o) {
+			selectedYear = (YearItem) o;
+			updateItems();
+		}
+
+		@Override
+		public int getSize() {
+			return yearList.size();
+		}
+
+		@Override
+		public YearItem getElementAt(int i) {
+			return yearList.get(i);
+		}
+
+		@Override
+		public void addListDataListener(ListDataListener listDataListener) {
+			listDataListeners.add(listDataListener);
+		}
+
+		@Override
+		public void removeListDataListener(ListDataListener listDataListener) {
+			listDataListeners.remove(listDataListener);
+		}
+	});
 	WeatherEntryDisplayPanel weatherEntryDisplayPanel = new WeatherEntryDisplayPanel();
+	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
 	public MainFrame() throws HeadlessException {
 		try {
@@ -130,6 +170,9 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		jbuttonEditEntry.setEnabled(false);
 		toolBar.add(jbuttonEditEntry);
 		toolBar.add(new JToolBar.Separator());
+
+		toolBar.add(yearSelector);
+
 		add(toolBar, BorderLayout.NORTH);
 		add(scrollPane, BorderLayout.CENTER);
 		add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
@@ -141,8 +184,54 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	@Override
 	public void updateItems() {
 		entries = weatherHistoryService.getAllWeatherEntries();
-		((AbstractTableModel)tableModel).fireTableDataChanged();
+
+		Set<YearItem> years = new TreeSet<>();
+		years.add(new YearItem(-1, "All Time"));
+		Calendar calendar = Calendar.getInstance();
+
+		java.util.List<WeatherEntry> toKeep = new ArrayList<>();
+		for (WeatherEntry entry : entries) {
+			calendar.setTime(entry.entryDate);
+			years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR)+""));
+			if (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) {
+				toKeep.add(entry);
+			}
+		}
+		yearList = new ArrayList<>(years);
+
+
+		Collections.sort(entries, new Comparator<WeatherEntry>() {
+			@Override
+			public int compare(WeatherEntry weatherEntry, WeatherEntry weatherEntry2) {
+				return weatherEntry.entryDate.compareTo(weatherEntry2.entryDate);
+			}
+		});
+
+		entries.retainAll(toKeep);
+
+
+		((AbstractTableModel) tableModel).fireTableDataChanged();
 		jbuttonEditEntry.setEnabled(false);
+	}
+
+	private class YearItem implements Comparable<YearItem> {
+		final int year;
+		final String display;
+
+		private YearItem(int year, String display) {
+			this.year = year;
+			this.display = display;
+		}
+
+		@Override
+		public String toString() {
+			return display;
+		}
+
+		@Override
+		public int compareTo(YearItem yearItem) {
+			return Integer.compare(this.year, yearItem.year);
+		}
 	}
 
 	private TableColumnModel createTableColumnModel() {
