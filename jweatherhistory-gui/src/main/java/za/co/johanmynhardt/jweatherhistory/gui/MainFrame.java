@@ -37,6 +37,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 	private final UIBuilderService builderService = new UIBuilderService();
 	java.util.List<WeatherEntry> entries = new ArrayList<>();
 	java.util.List<YearItem> yearList = new ArrayList<>();
+	java.util.List<MonthItem> monthList = new ArrayList<>();
 	JTable jTable = new JTable();
 	TableModel tableModel;
 	JButton jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
@@ -52,6 +53,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		}
 	});
 	YearItem selectedYear = new YearItem(-1, "All Time");
+	MonthItem selectedMonth = new MonthItem(-1, "All Months");
 	JComboBox<YearItem> yearSelector = new JComboBox<>(new ComboBoxModel<YearItem>() {
 		//TODO: Clean this model up.
 		Set<ListDataListener> listDataListeners = new HashSet<>();
@@ -87,6 +89,41 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 			listDataListeners.remove(listDataListener);
 		}
 	});
+
+	JComboBox<MonthItem> monthSelector = new JComboBox<>(new ComboBoxModel<MonthItem>() {
+		Set<ListDataListener> listDataListeners = new HashSet<>();
+		@Override
+		public void setSelectedItem(Object o) {
+			selectedMonth = (MonthItem) o;
+			updateItems();
+		}
+
+		@Override
+		public Object getSelectedItem() {
+			return selectedMonth;
+		}
+
+		@Override
+		public int getSize() {
+			return monthList.size();
+		}
+
+		@Override
+		public MonthItem getElementAt(int i) {
+			return monthList.get(i);
+		}
+
+		@Override
+		public void addListDataListener(ListDataListener listDataListener) {
+			listDataListeners.add(listDataListener);
+		}
+
+		@Override
+		public void removeListDataListener(ListDataListener listDataListener) {
+			listDataListeners.remove(listDataListener);
+		}
+	});
+
 	WeatherEntryDisplayPanel weatherEntryDisplayPanel = new WeatherEntryDisplayPanel();
 	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
 
@@ -171,6 +208,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		toolBar.add(jbuttonEditEntry);
 		toolBar.add(new JToolBar.Separator());
 
+		toolBar.add(monthSelector);
 		toolBar.add(yearSelector);
 
 		add(toolBar, BorderLayout.NORTH);
@@ -189,15 +227,34 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		years.add(new YearItem(-1, "All Time"));
 		Calendar calendar = Calendar.getInstance();
 
+		Set<MonthItem> months = new TreeSet<>();
+		months.add(new MonthItem(-1, "All Months"));
+		months.add(new MonthItem(Calendar.JANUARY, "January"));
+		months.add(new MonthItem(Calendar.FEBRUARY, "February"));
+		months.add(new MonthItem(Calendar.MARCH, "March"));
+		months.add(new MonthItem(Calendar.APRIL, "April"));
+		months.add(new MonthItem(Calendar.MAY, "May"));
+		months.add(new MonthItem(Calendar.JUNE, "June"));
+		months.add(new MonthItem(Calendar.JULY, "July"));
+		months.add(new MonthItem(Calendar.AUGUST, "August"));
+		months.add(new MonthItem(Calendar.SEPTEMBER, "September"));
+		months.add(new MonthItem(Calendar.OCTOBER, "October"));
+		months.add(new MonthItem(Calendar.NOVEMBER, "November"));
+		months.add(new MonthItem(Calendar.DECEMBER, "December"));
+
+		monthList = new ArrayList<>(months);
+
 		java.util.List<WeatherEntry> toKeep = new ArrayList<>();
 		for (WeatherEntry entry : entries) {
 			calendar.setTime(entry.entryDate);
 			years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR)+""));
 			if (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) {
-				toKeep.add(entry);
+				if (selectedMonth.month == calendar.get(Calendar.MONTH) || selectedMonth.month == -1)
+					toKeep.add(entry);
 			}
 		}
 		yearList = new ArrayList<>(years);
+
 
 
 		Collections.sort(entries, new Comparator<WeatherEntry>() {
@@ -231,6 +288,26 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		@Override
 		public int compareTo(YearItem yearItem) {
 			return Integer.compare(this.year, yearItem.year);
+		}
+	}
+
+	private class MonthItem implements Comparable<MonthItem> {
+		final int month;
+		final String display;
+
+		private MonthItem(int month, String display) {
+			this.display = display;
+			this.month = month;
+		}
+
+		@Override
+		public String toString() {
+			return display;
+		}
+
+		@Override
+		public int compareTo(MonthItem monthItem) {
+			return Integer.compare(this.month, monthItem.month);
 		}
 	}
 
