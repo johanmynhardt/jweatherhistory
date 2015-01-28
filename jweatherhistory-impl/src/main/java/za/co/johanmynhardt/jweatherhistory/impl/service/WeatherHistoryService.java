@@ -1,358 +1,360 @@
 package za.co.johanmynhardt.jweatherhistory.impl.service;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
-import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
 import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
 import za.co.johanmynhardt.jweatherhistory.api.service.UpdateService;
-import za.co.johanmynhardt.jweatherhistory.impl.config.JWeatherHistoryConfigImpl;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
 import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
 
-import static java.lang.String.format;
-
 /**
  * @author Johan Mynhardt
  */
+@Service
 public class WeatherHistoryService implements CaptureService, ReaderService, UpdateService {
-	public static final String DATE_FORMAT = "yyyy-MM-dd";
-	private static final Logger logger = Logger.getLogger(WeatherHistoryService.class.getName());
-	public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
-	private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private static Connection connection;
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final Logger LOG = LoggerFactory.getLogger(WeatherHistoryService.class);
+    public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
+    private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	static {
-		try {
-			JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
-			config.bootstrapSQL();
-			connection = DriverManager.getConnection(config.getConnectionUrl());
-		} catch (SQLException e) {
-			logger.severe(format("Could not bootstrap Derby DB successfully. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
-			e.printStackTrace();
-		}
+    @Inject
+    private JdbcTemplate jdbcTemplate;
 
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					logger.warning("Closing connection " + connection);
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-		}));
-	}
+    @Inject
+    private TransactionTemplate transactionTemplate;
 
-	@Override
-	public WeatherEntry createWeatherEntry(String description, Date entryDate, int minimumTemperature, int maximumTemperature, RainEntry rainEntry, WindEntry windEntry) {
-		WeatherEntry weatherEntry = new WeatherEntry(
-				0,
-				description,
-				entryDate,
-				new Date(),
-				minimumTemperature,
-				maximumTemperature,
-				windEntry,
-				rainEntry
-		);
+    public WeatherHistoryService() {
+    }
 
-		return createWeatherEntry(weatherEntry);
-	}
+    @PostConstruct
+    public void init() {
+        LOG.info("WeatherHistoryService.init()");
+        LOG.debug("jdbcTemplate={}", jdbcTemplate);
+    }
 
-	@Override
-	public WeatherEntry createWeatherEntry(WeatherEntry weatherEntry) {
-		logger.info("Creating weatherEntry");
-		logger.fine(weatherEntry.toString());
+    @Override
+    public WeatherEntry createWeatherEntry(String description, Date entryDate, int minimumTemperature, int maximumTemperature, RainEntry rainEntry, WindEntry windEntry) {
+        WeatherEntry weatherEntry = new WeatherEntry(
+                0,
+                description,
+                entryDate,
+                new Date(),
+                minimumTemperature,
+                maximumTemperature,
+                windEntry,
+                rainEntry
+        );
 
-		try {
-			connection.setAutoCommit(false);
-			PreparedStatement preparedStatement = connection.prepareStatement(
-					"INSERT INTO WEATHERENTRY (DESCRIPTION, MINIMUM_TEMPERATURE, MAXIMUM_TEMPERATURE, ENTRY_DATE, CAPTURE_DATE) values (?, ?, ?, ? ,?)",
-					Statement.RETURN_GENERATED_KEYS
-			);
+        return createWeatherEntry(weatherEntry);
+    }
 
-			preparedStatement.setString(1, weatherEntry.description);
-			preparedStatement.setInt(2, weatherEntry.minimumTemperature);
-			preparedStatement.setInt(3, weatherEntry.maximumTemperature);
-			preparedStatement.setDate(4, new java.sql.Date(weatherEntry.entryDate.getTime()));
-			preparedStatement.setDate(5, new java.sql.Date(weatherEntry.captureDate.getTime()));
-			preparedStatement.execute();
+    @Override
+    public WeatherEntry createWeatherEntry(final WeatherEntry weatherEntry) {
+        LOG.info("Creating weatherEntry");
+        LOG.debug("weatherEntry={}", weatherEntry.toString());
 
-			ResultSet resultSet = preparedStatement.getGeneratedKeys();
-			int generatedId = resultSet.next() ? resultSet.getInt(1) : -1;
-			logger.finer("GeneratedId: " + generatedId);
+        final WeatherEntry execute = transactionTemplate.execute(new TransactionCallback<WeatherEntry>() {
+            @Override
+            public WeatherEntry doInTransaction(TransactionStatus status) {
 
-			weatherEntry = new WeatherEntry(
-					generatedId,
-					weatherEntry.description,
-					weatherEntry.entryDate,
-					weatherEntry.captureDate,
-					weatherEntry.minimumTemperature,
-					weatherEntry.maximumTemperature,
-					weatherEntry.windEntry,
-					weatherEntry.rainEntry
-			);
+                KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
+                jdbcTemplate.update(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                        PreparedStatement preparedStatement = con.prepareStatement(
+                                "INSERT INTO WEATHERENTRY (DESCRIPTION, MINIMUM_TEMPERATURE, MAXIMUM_TEMPERATURE, ENTRY_DATE, CAPTURE_DATE) VALUES (?, ?, ?, ? ,?)",
+                                Statement.RETURN_GENERATED_KEYS
+                        );
 
-			WindEntry createdWindEntry = null;
-			RainEntry createdRainEntry = null;
+                        preparedStatement.setString(1, weatherEntry.getDescription());
+                        preparedStatement.setInt(2, weatherEntry.getMinimumTemperature());
+                        preparedStatement.setInt(3, weatherEntry.getMaximumTemperature());
+                        preparedStatement.setDate(4, new java.sql.Date(weatherEntry.getEntryDate().getTime()));
+                        preparedStatement.setDate(5, new java.sql.Date(weatherEntry.getCaptureDate().getTime()));
 
-			boolean updated = false;
-			if (weatherEntry.rainEntry != null) {
-				createdRainEntry = createRainEntry(weatherEntry.rainEntry.description, weatherEntry.rainEntry.volume, weatherEntry);
-				updated = true;
-			}
-			if (weatherEntry.windEntry != null) {
-				createdWindEntry = createWindEntry(weatherEntry.windEntry.description, weatherEntry.windEntry.windDirection, weatherEntry.windEntry.windspeed, weatherEntry);
-				updated = true;
-			}
+                        return preparedStatement;
+                    }
+                }, generatedKeyHolder);
 
-			if (updated) {
-				weatherEntry = new WeatherEntry(
-						weatherEntry.id,
-						weatherEntry.description,
-						weatherEntry.entryDate,
-						weatherEntry.captureDate,
-						weatherEntry.minimumTemperature,
-						weatherEntry.maximumTemperature,
-						createdWindEntry,
-						createdRainEntry
-				);
-				update(weatherEntry);
-			}
-			connection.commit();
-			return weatherEntry;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			try {
-				connection.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-		} finally {
-			try {
-				connection.setAutoCommit(true);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+                LOG.debug("GeneratedKey for weatherEntry={}", generatedKeyHolder);
 
-		return null;
-	}
+                final WeatherEntry weatherEntry1 = new WeatherEntry(
+                        generatedKeyHolder.getKey().longValue(),
+                        weatherEntry.getDescription(),
+                        weatherEntry.getEntryDate(),
+                        weatherEntry.getCaptureDate(),
+                        weatherEntry.getMinimumTemperature(),
+                        weatherEntry.getMaximumTemperature(),
+                        weatherEntry.getWindEntry(),
+                        weatherEntry.getRainEntry()
+                );
 
-	@Override
-	public RainEntry createRainEntry(String description, Integer volume, WeatherEntry weatherEntry) {
-		try {
-			PreparedStatement preparedStatement = connection.prepareStatement(
-					"INSERT INTO RAINENTRY (DESCRIPTION, VOLUME, WEATHERENTRY_ID) values (?,?,?)",
-					Statement.RETURN_GENERATED_KEYS
-			);
+                WindEntry createdWindEntry = null;
+                RainEntry createdRainEntry = null;
 
-			preparedStatement.setString(1, description);
-			preparedStatement.setInt(2, volume);
-			preparedStatement.setLong(3, weatherEntry.id);
+                boolean updated = false;
+                if (weatherEntry1.getRainEntry() != null) {
+                    createdRainEntry = createRainEntry(weatherEntry1.getRainEntry().description, weatherEntry1.getRainEntry().volume, weatherEntry1);
+                    updated = true;
+                }
+                if (weatherEntry1.getWindEntry() != null) {
+                    createdWindEntry = createWindEntry(weatherEntry1.getWindEntry().description, weatherEntry1.getWindEntry().windDirection, weatherEntry1.getWindEntry().windspeed, weatherEntry1);
+                    updated = true;
+                }
 
-			preparedStatement.executeUpdate();
+                WeatherEntry weatherEntry2 = null;
 
-			ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-			RainEntry rainEntry = new RainEntry(generatedKeys.next() ? generatedKeys.getInt(1) : -1, volume, description, weatherEntry);
-			logger.fine("RainEntry created: " + rainEntry);
-			return rainEntry;
-		} catch (SQLException e) {
-			logger.warning(format("Could not create RainEntry. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
-		}
-		return null;
-	}
+                if (updated) {
+                    weatherEntry2 = new WeatherEntry(
+                            weatherEntry1.getId(),
+                            weatherEntry1.getDescription(),
+                            weatherEntry1.getEntryDate(),
+                            weatherEntry1.getCaptureDate(),
+                            weatherEntry1.getMinimumTemperature(),
+                            weatherEntry1.getMaximumTemperature(),
+                            createdWindEntry,
+                            createdRainEntry
+                    );
+                    update(weatherEntry2);
+                    return weatherEntry2;
+                }
 
-	@Override
-	public WindEntry createWindEntry(String description, WindDirection direction, Integer windSpeed, WeatherEntry weatherEntry) throws SQLException {
-		connection.setAutoCommit(false);
-		PreparedStatement statement = connection.prepareStatement(
-				"INSERT INTO WINDENTRY (DESCRIPTION, WINDDIRECTION, WINDSPEED, WEATHERENTRY_ID) values (?, ?, ?, ?)",
-				Statement.RETURN_GENERATED_KEYS
-		);
+                return weatherEntry1;
+            }
+        });
 
-		statement.setString(1, description);
-		statement.setString(2, direction.name());
-		statement.setInt(3, windSpeed);
-		statement.setLong(4, weatherEntry.id);
-		statement.executeUpdate();
+        LOG.debug("created weatherEntry={}", execute);
 
-		ResultSet resultSet = statement.getGeneratedKeys();
+        return execute;
+    }
 
-		if (resultSet.next()) {
-			int id = resultSet.getInt(1);
+    @Override
+    public RainEntry createRainEntry(final String description, final Integer volume, final WeatherEntry weatherEntry) {
+        LOG.debug("Creating RainEntry description={}, volume={}, weatherEntry={}", description, volume, weatherEntry);
 
-			WindEntry windEntry = new WindEntry(id, description, direction, windSpeed, weatherEntry);
-			connection.commit();
-			connection.setAutoCommit(true);
-			return windEntry;
-		} else {
-			connection.rollback();
-			connection.setAutoCommit(true);
-			throw new SQLException("Unexpected condition: no key generated for new WindEntry.");
-		}
-	}
+        final GeneratedKeyHolder generatedKeyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 
-	@Override
-	public List<WeatherEntry> getAllWeatherEntries() {
-		try {
-			Statement statement = connection.createStatement();
-			String QUERY = format("SELECT * FROM WEATHERENTRY");
-			ResultSet resultSet = statement.executeQuery(QUERY);
-			//printResultSetMetaData(resultSet.getMetaData());
+                final PreparedStatement preparedStatement = con.prepareStatement("INSERT INTO RAINENTRY (DESCRIPTION, VOLUME, WEATHERENTRY_ID) VALUES (?,?,?)",
+                        Statement.RETURN_GENERATED_KEYS);
 
-			List<WeatherEntry> results = new ArrayList<>();
-			while (resultSet.next()) {
-				WindEntry windEntry = getWindEntry(resultSet.getInt(7));
-				RainEntry rainEntry = getRainEntry(resultSet.getInt(8));
-				WeatherEntry weatherEntry = new WeatherEntry(resultSet.getLong(1), resultSet.getString(2), resultSet.getDate(5), resultSet.getTimestamp(6), resultSet.getInt(3), resultSet.getInt(4), windEntry, rainEntry);
-				results.add(weatherEntry);
-			}
-			return results;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return new ArrayList<>();
-	}
+                preparedStatement.setString(1, description);
+                preparedStatement.setInt(2, volume);
+                preparedStatement.setLong(3, weatherEntry.getId());
 
-	private void printResultSetMetaData(ResultSetMetaData resultSetMetaData) {
-		try {
-			StringBuilder stringBuilder = new StringBuilder();
-			for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-				stringBuilder.append(i).append(". ").append(resultSetMetaData.getColumnName(i)).append(" | ");
-			}
-			logger.finest("Columns: " + stringBuilder.toString());
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
+                LOG.debug("Returning preparedStatement={}", preparedStatement);
 
-	@Override
-	public WindEntry getWindEntry(int id) {
+                return preparedStatement;
+            }
+        }, generatedKeyHolder);
 
-		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM WINDENTRY WHERE ID = ?");
-			statement.setInt(1, id);
+        final Number key = generatedKeyHolder.getKey();
+        final RainEntry rainEntry = new RainEntry(key.longValue(), volume, description, weatherEntry);
 
-			ResultSet resultSet = statement.executeQuery();
-			if (!resultSet.next()) throw new RuntimeException("Unexpected state.");
-			//1. ID | 2. DESCRIPTION | 3. WINDDIRECTION | 4. WINDSPEED | 5. WEATHERENTRY_ID |
-			return new WindEntry(resultSet.getLong("ID"), resultSet.getString("DESCRIPTION"), WindDirection.valueOf(resultSet.getString("WINDDIRECTION")), resultSet.getInt("WINDSPEED"), null);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+        LOG.debug("created rainEntry={}", rainEntry);
 
-	@Override
-	public RainEntry getRainEntry(int id) {
-		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM RAINENTRY WHERE ID = ?");
-			statement.setInt(1, id);
+        return rainEntry;
+    }
 
-			ResultSet resultSet = statement.executeQuery();
-			if (!resultSet.next()) throw new RuntimeException("Unexpected state.");
-			return new RainEntry(resultSet.getInt("ID"), resultSet.getInt("VOLUME"), resultSet.getString("DESCRIPTION"), null);
-		} catch (SQLException e) {
-			logger.warning(format("Could not retrieve RainEntry. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
-		}
-		return null;
-	}
+    @Override
+    public WindEntry createWindEntry(final String description, final WindDirection direction, final Integer windSpeed, final WeatherEntry weatherEntry) {
 
-	@Override
-	public WeatherEntry update(WeatherEntry weatherEntry) {
-		try {
-			connection.setAutoCommit(false);
-			String updateStatement = "UPDATE WEATHERENTRY set DESCRIPTION = ?, WINDENTRY_ID = ?, RAINENTRY_ID = ? where ID = ?";
-			PreparedStatement preparedStatement = connection.prepareStatement(updateStatement);
+        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
-			preparedStatement.setString(1, weatherEntry.description);
-			preparedStatement.setLong(2, weatherEntry.windEntry.id);
-			preparedStatement.setLong(3, weatherEntry.rainEntry.id);
-			preparedStatement.setLong(4, weatherEntry.id);
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement statement = con.prepareStatement(
+                        "INSERT INTO WINDENTRY (DESCRIPTION, WINDDIRECTION, WINDSPEED, WEATHERENTRY_ID) VALUES (?, ?, ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS
+                );
 
-			preparedStatement.executeUpdate();
-			connection.commit();
-			return weatherEntry;
-		} catch (SQLException e) {
-			logger.warning(format("Could not update WeatherEntry. (%s: %s) Rolling back.", e.getClass().getSimpleName(), e.getMessage()));
-			try {
-				connection.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-		} finally {
-			try {
-				connection.setAutoCommit(true);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		return weatherEntry;
-	}
+                statement.setString(1, description);
+                statement.setString(2, direction.name());
+                statement.setInt(3, windSpeed);
+                statement.setLong(4, weatherEntry.getId());
 
-	@Override
-	public WeatherEntry updateFromEdit(WeatherEntry weatherEntry) {
-		try {
-			connection.setAutoCommit(false);
-			PreparedStatement preparedStatement = connection.prepareStatement(
-					"UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ?, " +
-							"ENTRY_DATE = ?" +
-							"WHERE ID = ?"
-			);
+                return statement;
+            }
+        }, keyHolder);
 
-			preparedStatement.setString(1, weatherEntry.description);
-			preparedStatement.setInt(2, weatherEntry.minimumTemperature);
-			preparedStatement.setInt(3, weatherEntry.maximumTemperature);
-			preparedStatement.setDate(4, new java.sql.Date(weatherEntry.entryDate.getTime()));
-			preparedStatement.setLong(5, weatherEntry.id);
-			preparedStatement.executeUpdate();
+        WindEntry windEntry = new WindEntry(keyHolder.getKey().longValue(), description, direction, windSpeed, weatherEntry);
 
-			preparedStatement = connection.prepareStatement(
-					"UPDATE WINDENTRY SET DESCRIPTION = ?, WINDDIRECTION = ?, WINDSPEED = ? WHERE ID = ?"
-			);
+        return windEntry;
+    }
 
-			preparedStatement.setString(1, weatherEntry.windEntry.description);
-			preparedStatement.setString(2, weatherEntry.windEntry.windDirection.name());
-			preparedStatement.setInt(3, weatherEntry.windEntry.windspeed);
-			preparedStatement.setLong(4, weatherEntry.windEntry.id);
-			preparedStatement.executeUpdate();
+    @Override
+    public List<WeatherEntry> getAllWeatherEntries() {
 
-			preparedStatement = connection.prepareStatement(
-					"UPDATE RAINENTRY SET DESCRIPTION = ?, VOLUME = ? WHERE ID = ?"
-			);
-			preparedStatement.setString(1, weatherEntry.rainEntry.description);
-			preparedStatement.setInt(2, weatherEntry.rainEntry.volume);
-			preparedStatement.setLong(3, weatherEntry.rainEntry.id);
-			preparedStatement.executeUpdate();
+        List<WeatherEntry> results = jdbcTemplate.query("SELECT * FROM WEATHERENTRY", new RowMapper<WeatherEntry>() {
+            @Override
+            public WeatherEntry mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new WeatherEntry(rs.getLong(1),
+                        rs.getString("DESCRIPTION"),
+                        rs.getDate("ENTRY_DATE"),
+                        rs.getDate("CAPTURE_DATE"),
+                        rs.getInt("MINIMUM_TEMPERATURE"),
+                        rs.getInt("MAXIMUM_TEMPERATURE"),
+                        getWindEntry(rs.getInt("WINDENTRY_ID")),
+                        getRainEntry(rs.getInt("RAINENTRY_ID"))
+                );
+            }
+        });
+        return results;
+    }
 
-			connection.commit();
-			connection.setAutoCommit(true);
-		} catch (SQLException e) {
-			try {
-				connection.rollback();
-				connection.setAutoCommit(true);
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			e.printStackTrace();
-		}
+    private void printResultSetMetaData(ResultSetMetaData resultSetMetaData) {
+        try {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+                stringBuilder.append(i).append(". ").append(resultSetMetaData.getColumnName(i)).append(" | ");
+            }
+            LOG.trace("Columns: {}", stringBuilder.toString());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-		return weatherEntry;
-	}
+    @Override
+    public WindEntry getWindEntry(int id) {
+
+        LOG.debug("retrieving windEntry with id={}", id);
+
+        WindEntry windEntry = jdbcTemplate.queryForObject("SELECT * FROM WINDENTRY WHERE ID = ?", new RowMapper<WindEntry>() {
+            @Override
+            public WindEntry mapRow(ResultSet rs, int rowNum) throws SQLException {
+                //1. ID | 2. DESCRIPTION | 3. WINDDIRECTION | 4. WINDSPEED | 5. WEATHERENTRY_ID |
+                return new WindEntry(
+                        rs.getInt("ID"),
+                        rs.getString("DESCRIPTION"),
+                        WindDirection.valueOf(rs.getString("WINDDIRECTION")),
+                        rs.getInt("WINDSPEED"),
+                        null
+                );
+            }
+        }, id);
+
+        return windEntry;
+    }
+
+    @Override
+    public RainEntry getRainEntry(int id) {
+        return jdbcTemplate.queryForObject("SELECT * FROM RAINENTRY WHERE ID = ?", new RowMapper<RainEntry>() {
+            @Override
+            public RainEntry mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new RainEntry(
+                        rs.getInt("ID"),
+                        rs.getInt("VOLUME"),
+                        rs.getString("DESCRIPTION"),
+                        null
+                );
+            }
+        }, id);
+    }
+
+    @Override
+    public WeatherEntry update(final WeatherEntry weatherEntry) {
+
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement preparedStatement = con.prepareStatement("UPDATE WEATHERENTRY SET DESCRIPTION = ?, WINDENTRY_ID = ?, RAINENTRY_ID = ? WHERE ID = ?");
+
+                preparedStatement.setString(1, weatherEntry.getDescription());
+                preparedStatement.setLong(2, weatherEntry.getWindEntry().id);
+                preparedStatement.setLong(3, weatherEntry.getRainEntry().id);
+                preparedStatement.setLong(4, weatherEntry.getId());
+                return preparedStatement;
+            }
+        });
+
+        return weatherEntry;
+    }
+
+    @Override
+    public WeatherEntry updateFromEdit(final WeatherEntry weatherEntry) {
+
+        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                jdbcTemplate.update(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                        PreparedStatement preparedStatement = con.prepareStatement(
+                                "UPDATE WEATHERENTRY SET DESCRIPTION = ?, MINIMUM_TEMPERATURE = ?, MAXIMUM_TEMPERATURE = ?, " +
+                                        "ENTRY_DATE = ?" +
+                                        "WHERE ID = ?"
+                        );
+
+                        preparedStatement.setString(1, weatherEntry.getDescription());
+                        preparedStatement.setInt(2, weatherEntry.getMinimumTemperature());
+                        preparedStatement.setInt(3, weatherEntry.getMaximumTemperature());
+                        preparedStatement.setDate(4, new java.sql.Date(weatherEntry.getEntryDate().getTime()));
+                        preparedStatement.setLong(5, weatherEntry.getId());
+                        return preparedStatement;
+                    }
+                });
+
+                jdbcTemplate.update(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                        final PreparedStatement preparedStatement = con.prepareStatement(
+                                "UPDATE WINDENTRY SET DESCRIPTION = ?, WINDDIRECTION = ?, WINDSPEED = ? WHERE ID = ?"
+                        );
+
+                        preparedStatement.setString(1, weatherEntry.getWindEntry().description);
+                        preparedStatement.setString(2, weatherEntry.getWindEntry().windDirection.name());
+                        preparedStatement.setInt(3, weatherEntry.getWindEntry().windspeed);
+                        preparedStatement.setLong(4, weatherEntry.getWindEntry().id);
+                        return preparedStatement;
+                    }
+                });
+
+                jdbcTemplate.update(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                        final PreparedStatement preparedStatement = con.prepareStatement(
+                                "UPDATE RAINENTRY SET DESCRIPTION = ?, VOLUME = ? WHERE ID = ?"
+                        );
+                        preparedStatement.setString(1, weatherEntry.getRainEntry().description);
+                        preparedStatement.setInt(2, weatherEntry.getRainEntry().volume);
+                        preparedStatement.setLong(3, weatherEntry.getRainEntry().id);
+                        return preparedStatement;
+                    }
+                });
+            }
+        });
+
+        return weatherEntry;
+    }
 }

@@ -1,13 +1,18 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.logging.Logger;
 
-import javax.swing.*;
+import static java.lang.String.format;
 
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
@@ -16,16 +21,17 @@ import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
 import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
 
-import static java.lang.String.format;
-
 /**
  * @author Johan Mynhardt
  */
+@org.springframework.stereotype.Component
 public class WeatherEntryEditor extends JFrame {
-	private final Logger logger = Logger.getLogger(WeatherEntryEditor.class.getName());
-	private final WeatherHistoryService weatherHistoryService;
-	private final WeatherEntryListener entryListener;
-	private final WeatherEntry weatherEntry;
+	private final Logger logger = LoggerFactory.getLogger(WeatherEntryEditor.class);
+
+	@Inject
+	private WeatherHistoryService weatherHistoryService;
+	//private final WeatherEntryListener entryListener;
+	private WeatherEntry weatherEntry;
 	JTextField tfDate = new JTextField();
 	JSpinner jSpinnerMin = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
 	JSpinner jSpinnerMax = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
@@ -35,37 +41,25 @@ public class WeatherEntryEditor extends JFrame {
 	JSpinner jSpinnerRainVolume = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1));
 	JTextArea taWindDescription = new JTextArea();
 	JTextArea taRainDescription = new JTextArea();
-	private UIBuilderService uiBuilderService = new UIBuilderService();
+
+	@Inject
+	private UIBuilderService uiBuilderService;
 
 
-	public WeatherEntryEditor(WeatherHistoryService weatherHistoryService, WeatherEntryListener listener, WeatherEntry... selectedItem) throws HeadlessException {
-		this.weatherHistoryService = weatherHistoryService;
-		this.entryListener = listener;
+	public WeatherEntryEditor() throws HeadlessException {
+		//this.entryListener = listener;
 		setTitle("Add/Edit WeatherEntry");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		setSize(700, 400);
 
-		buildGrid();
-
 		setLocationRelativeTo(null);
 		setVisible(true);
+	}
 
-		if (selectedItem.length > 0) {
-			weatherEntry = selectedItem[0];
-			logger.fine("Editing " + weatherEntry);
-			tfDate.setText(weatherEntry.entryDate.toString());
-			jSpinnerMin.setValue(weatherEntry.minimumTemperature);
-			jSpinnerMax.setValue(weatherEntry.maximumTemperature);
-			taDescription.setText(weatherEntry.description);
-			windDirectionJComboBox.setSelectedItem(weatherEntry.windEntry.windDirection);
-			jSpinnerWindSpeed.setValue(weatherEntry.windEntry.windspeed);
-			jSpinnerRainVolume.setValue(weatherEntry.rainEntry.volume);
-			taWindDescription.setText(weatherEntry.windEntry.description);
-			taRainDescription.setText(weatherEntry.rainEntry.description);
-		} else {
-			weatherEntry = null;
-		}
+	@PostConstruct
+	public void init() {
+		buildGrid();
 	}
 
 	private void buildGrid() {
@@ -94,7 +88,7 @@ public class WeatherEntryEditor extends JFrame {
 		buttonPanel.add(uiBuilderService.newJButton("Cancel", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				logger.finest("Disposing of WeatherEntryEditor.");
+				logger.debug("Disposing of WeatherEntryEditor.");
 				dispose();
 			}
 		}));
@@ -105,10 +99,10 @@ public class WeatherEntryEditor extends JFrame {
 				//TODO use databinding?
 				try {
 					if (weatherEntry != null) {
-						RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry.id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-						WindEntry windEntry = new WindEntry(weatherEntry.windEntry.id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						RainEntry rainEntry = new RainEntry(weatherEntry.getRainEntry().id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(weatherEntry.getWindEntry().id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry updateWeatherEntry = new WeatherEntry(
-								weatherEntry.id,
+								weatherEntry.getId(),
 								taDescription.getText(),
 								WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()),
 								new Date(),
@@ -118,24 +112,56 @@ public class WeatherEntryEditor extends JFrame {
 								rainEntry
 						);
 						weatherHistoryService.updateFromEdit(updateWeatherEntry);
-						entryListener.updateItems();
+						// TODO: Add eventbus for this: entryListener.updateItems();
 						dispose();
 					} else {
 						RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
 						WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
 						weatherHistoryService.createWeatherEntry(weatherEntry);
-						entryListener.updateItems();
+						// TODO: add eventbust for this: entryListener.updateItems();
 						dispose();
 
 					}
 				} catch (ParseException e) {
-					logger.severe(format("%s: %s\n%s", e.getClass().getSimpleName(), e.getMessage(), Arrays.toString(e.getStackTrace())));
+					logger.error("{}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
 				}
 			}
 		}));
 		cancelSavePanel.add(buttonPanel, BorderLayout.EAST);
 
 		add(cancelSavePanel, new GridBagConstraints(4, 7, 1, 1, 1, 0, GridBagConstraints.BASELINE, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 5, 5));
+	}
+
+	public void editEntry(WeatherEntry weatherEntry) {
+		this.weatherEntry = weatherEntry;
+		logger.debug("Editing weatherEntry={}", weatherEntry);
+
+		resetFields();
+
+		if (weatherEntry != null) {
+			tfDate.setText(weatherEntry.getCaptureDate().toString());
+			jSpinnerMin.setValue(weatherEntry.getMinimumTemperature());
+			jSpinnerMax.setValue(weatherEntry.getMaximumTemperature());
+			taDescription.setText(weatherEntry.getDescription());
+			windDirectionJComboBox.setSelectedItem(weatherEntry.getWindEntry().windDirection);
+			jSpinnerWindSpeed.setValue(weatherEntry.getWindEntry().windspeed);
+			jSpinnerRainVolume.setValue(weatherEntry.getRainEntry().volume);
+			taWindDescription.setText(weatherEntry.getWindEntry().description);
+			taRainDescription.setText(weatherEntry.getRainEntry().description);
+		}
+		setVisible(true);
+	}
+
+	private void resetFields() {
+		tfDate.setText(null);
+		jSpinnerMin.setValue(0);
+		jSpinnerMax.setValue(0);
+		taDescription.setText(null);
+		windDirectionJComboBox.setSelectedItem(null);
+		jSpinnerWindSpeed.setValue(0);
+		jSpinnerRainVolume.setValue(0);
+		taWindDescription.setText(null);
+		taRainDescription.setText(null);
 	}
 }

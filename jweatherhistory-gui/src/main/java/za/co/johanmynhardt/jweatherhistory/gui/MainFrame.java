@@ -1,16 +1,10 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
@@ -20,38 +14,42 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.MenuBarBuilder;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 
-import static java.lang.String.format;
-
 /**
  * @author Johan Mynhardt
  */
+@org.springframework.stereotype.Component
 public class MainFrame extends JFrame implements WeatherEntryListener {
 
-	private final WeatherHistoryService weatherHistoryService = new WeatherHistoryService();
-	private final Logger logger = Logger.getLogger(MainFrame.class.getName());
-	private final UIBuilderService builderService = new UIBuilderService();
+	private final Logger LOG = LoggerFactory.getLogger(MainFrame.class);
+
+	@Inject
+	private WeatherHistoryService weatherHistoryService;
+
+	@Inject
+	private UIBuilderService builderService;
+
 	java.util.List<WeatherEntry> entries = new ArrayList<>();
 	java.util.List<YearItem> yearList = new ArrayList<>();
 	java.util.List<MonthItem> monthList = new ArrayList<>();
 	JTable jTable = new JTable();
 	TableModel tableModel;
-	JButton jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
-			new WeatherEntryEditor(weatherHistoryService, MainFrame.this);
-		}
-	});
-	JButton jbuttonEditEntry = builderService.newJButton("Edit Entry", new AbstractAction() {
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
-			new WeatherEntryEditor(weatherHistoryService, MainFrame.this, entries.get(jTable.getSelectedRow()));
-		}
-	});
+	JButton jButtonNewEntry;
+	JButton jbuttonEditEntry;
 	YearItem selectedYear = new YearItem(-1, "All Time");
 	MonthItem selectedMonth = new MonthItem(-1, "All Months");
 	JComboBox<YearItem> yearSelector = new JComboBox<>(new ComboBoxModel<YearItem>() {
@@ -124,15 +122,46 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		}
 	});
 
-	WeatherEntryDisplayPanel weatherEntryDisplayPanel = new WeatherEntryDisplayPanel();
-	private MenuBarBuilder menuBarBuilder = builderService.newMenuBarBuilder("File");
+	@Inject
+	WeatherEntryDisplayPanel weatherEntryDisplayPanel;
+
+	@Inject
+	WeatherEntryEditor weatherEntryEditor;
+
+	private MenuBarBuilder menuBarBuilder;
+
+	@PostConstruct
+	public void init() {
+		jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				weatherEntryEditor.editEntry(null);
+			}
+		});
+
+		jbuttonEditEntry = builderService.newJButton("Edit Entry", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				weatherEntryEditor.editEntry(entries.get(jTable.getSelectedRow()));
+			}
+		});
+
+		menuBarBuilder = builderService.newMenuBarBuilder("File");
+
+		initFrame();
+	}
 
 	public MainFrame() throws HeadlessException {
+		//initFrame();
+
+	}
+
+	private void initFrame() {
 		try {
 			//http://findicons.com/files/icons/2130/aluminum/59/weather.png
 			setIconImage(new ImageIcon(MainFrame.class.getResource("/icons/weather.png")).getImage());
 		} catch (Exception e) {
-			logger.warning(format("Could not set icon image. (%s: %s)", e.getClass().getSimpleName(), e.getMessage()));
+			LOG.warn("Could not set icon image. ({}: {})", e.getClass().getSimpleName(), e.getMessage());
 		}
 		setTitle("JWeatherHistory");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -163,17 +192,17 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 
 				switch (column) {
 					case 1:
-						return selectedEntry.id;
+						return selectedEntry.getId();
 					case 2:
-						return selectedEntry.description;
+						return selectedEntry.getDescription();
 					case 3:
-						return selectedEntry.captureDate == null ? null : selectedEntry.captureDate;
+						return selectedEntry.getCaptureDate() == null ? null : selectedEntry.getCaptureDate();
 					case 4:
-						return selectedEntry.entryDate == null ? null : selectedEntry.entryDate;
+						return selectedEntry.getEntryDate() == null ? null : selectedEntry.getEntryDate();
 					case 5:
-						return selectedEntry.minimumTemperature;
+						return selectedEntry.getMinimumTemperature();
 					case 6:
-						return selectedEntry.maximumTemperature;
+						return selectedEntry.getMaximumTemperature();
 					default:
 						return null;
 				}
@@ -215,7 +244,6 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		add(scrollPane, BorderLayout.CENTER);
 		add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
 
-		setVisible(true);
 		updateItems();
 	}
 
@@ -246,7 +274,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 
 		java.util.List<WeatherEntry> toKeep = new ArrayList<>();
 		for (WeatherEntry entry : entries) {
-			calendar.setTime(entry.entryDate);
+			calendar.setTime(entry.getEntryDate());
 			years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR)+""));
 			if (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) {
 				if (selectedMonth.month == calendar.get(Calendar.MONTH) || selectedMonth.month == -1)
@@ -260,7 +288,7 @@ public class MainFrame extends JFrame implements WeatherEntryListener {
 		Collections.sort(entries, new Comparator<WeatherEntry>() {
 			@Override
 			public int compare(WeatherEntry weatherEntry, WeatherEntry weatherEntry2) {
-				return weatherEntry.entryDate.compareTo(weatherEntry2.entryDate);
+				return weatherEntry.getEntryDate().compareTo(weatherEntry2.getEntryDate());
 			}
 		});
 

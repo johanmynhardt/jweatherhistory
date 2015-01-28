@@ -1,8 +1,8 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
-import java.awt.*;
-
 import javax.swing.*;
+
+import java.awt.*;
 
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.TitledPanelGenerator;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
@@ -11,6 +11,7 @@ import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 /**
  * @author Johan Mynhardt
  */
+@org.springframework.stereotype.Component
 public class WeatherEntryDisplayPanel extends JPanel {
 	TitledPanelGenerator uiBuilderService = new UIBuilderService();
 	JTextField entryDateDisplay = new JTextField();
@@ -79,14 +80,14 @@ public class WeatherEntryDisplayPanel extends JPanel {
 	}
 
 	public void displayWeatherEntry(WeatherEntry weatherEntry) {
-		entryDateDisplay.setText(weatherEntry.entryDate.toString());
-		captureDateDisplay.setText(weatherEntry.captureDate.toString());
-		minTempDisplay.setText(weatherEntry.minimumTemperature + "");
-		maxTempDisplay.setText(weatherEntry.maximumTemperature + "");
-		descriptionDisplay.setText(weatherEntry.description.trim().isEmpty() ? "No description" : weatherEntry.description);
-		windDirectionDisplay.setText(weatherEntry.windEntry.windDirection.name());
-		windSpeedDisplay.setText(weatherEntry.windEntry.windspeed + "");
-		rainVolumeDisplay.setText(weatherEntry.rainEntry.volume + "");
-		rainDescriptionDisplay.setText(weatherEntry.rainEntry.description);
+		entryDateDisplay.setText(weatherEntry.getEntryDate().toString());
+		captureDateDisplay.setText(weatherEntry.getCaptureDate().toString());
+		minTempDisplay.setText(weatherEntry.getMinimumTemperature() + "");
+		maxTempDisplay.setText(weatherEntry.getMaximumTemperature() + "");
+		descriptionDisplay.setText(weatherEntry.getDescription().trim().isEmpty() ? "No description" : weatherEntry.getDescription());
+		windDirectionDisplay.setText(weatherEntry.getWindEntry().windDirection.name());
+		windSpeedDisplay.setText(weatherEntry.getWindEntry().windspeed + "");
+		rainVolumeDisplay.setText(weatherEntry.getRainEntry().volume + "");
+		rainDescriptionDisplay.setText(weatherEntry.getRainEntry().description);
 	}
 }

@@ -1,6 +1,5 @@
 package za.co.johanmynhardt.jweatherhistory.api.service;
 
-import java.sql.SQLException;
 import java.util.Date;
 
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
@@ -14,7 +13,7 @@ import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
 public interface CaptureService {
 	WeatherEntry createWeatherEntry(String description, Date entryDate, int minimumTemperature, int maximumTemperature, RainEntry rainEntry, WindEntry windEntry);
 	RainEntry createRainEntry(String description, Integer volume, WeatherEntry weatherEntry);
-	WindEntry createWindEntry(String description, WindDirection direction, Integer windSpeed, WeatherEntry weatherEntry) throws SQLException;
+	WindEntry createWindEntry(String description, WindDirection direction, Integer windSpeed, WeatherEntry weatherEntry);
 
 	WeatherEntry createWeatherEntry(WeatherEntry weatherEntry);
 }

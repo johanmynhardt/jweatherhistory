@@ -1,8 +1,8 @@
 package za.co.johanmynhardt.jweatherhistory.gui.uibuilder;
 
-import java.awt.*;
-
 import javax.swing.*;
+
+import java.awt.*;
 
 /**
  * @author Johan Mynhardt

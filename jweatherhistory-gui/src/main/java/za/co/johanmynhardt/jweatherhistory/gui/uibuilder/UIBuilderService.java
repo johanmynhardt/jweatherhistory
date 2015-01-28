@@ -1,13 +1,16 @@
 package za.co.johanmynhardt.jweatherhistory.gui.uibuilder;
 
-import java.awt.*;
+import org.springframework.stereotype.Service;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 
+import java.awt.*;
+
 /**
  * @author Johan Mynhardt
  */
+@Service
 public class UIBuilderService implements JButtonGenerator, MenuBarBuilder, TableColumnEmitter, TitledPanelGenerator {
 
 	@Override

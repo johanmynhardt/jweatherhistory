@@ -1,22 +1,25 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-
-import javax.swing.*;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 import com.jgoodies.looks.plastic.PlasticLookAndFeel;
 import com.jgoodies.looks.plastic.theme.LightGray;
-import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
-import za.co.johanmynhardt.jweatherhistory.impl.config.JWeatherHistoryConfigImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+
+import java.util.Date;
+
+@Configuration
+@ComponentScan("za.co.johanmynhardt.jweatherhistory")
 public class JWeatherHistoryUI {
-	private static Logger logger = Logger.getLogger(JWeatherHistoryUI.class.getName());
+	private static Logger LOG = LoggerFactory.getLogger(JWeatherHistoryUI.class);
+
 	public static void main(String[] args) {
-		JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
-		config.bootstrapLog();
 
 
 		try {
@@ -27,16 +30,24 @@ public class JWeatherHistoryUI {
 			e.printStackTrace();
 		}
 
+		ApplicationContext context = new AnnotationConfigApplicationContext(JWeatherHistoryUI.class);
 
-		logger.info("----------------------------------------");
-		logger.info("Starting at " + new Date());
-		logger.finest("Launching JWeatherHistoryUI...");
-		new MainFrame();
+
+		//JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
+		//config.bootstrapLog();
+
+		LOG.info("----------------------------------------");
+		LOG.info("Starting at " + new Date());
+		LOG.debug("Launching JWeatherHistoryUI...");
+
+		MainFrame mainFrame = context.getBean(MainFrame.class);
+		mainFrame.setVisible(true);
+
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				logger.info("----------------------------------------");
-				logger.info("Shutting down at " + new Date());
+				LOG.info("----------------------------------------");
+				LOG.info("Shutting down at " + new Date());
 			}
 		}));
 	}

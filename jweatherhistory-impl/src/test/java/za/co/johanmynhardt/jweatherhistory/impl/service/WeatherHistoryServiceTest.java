@@ -1,9 +1,11 @@
 package za.co.johanmynhardt.jweatherhistory.impl.service;
 
 import java.util.Date;
-import java.util.logging.Logger;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
@@ -14,7 +16,7 @@ import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
  */
 public class WeatherHistoryServiceTest {
 	public static final String CONNECTION_URL = "jdbc:derby:/tmp/weatherhistory";
-	private Logger logger = Logger.getLogger(WeatherHistoryServiceTest.class.getName());
+	private Logger logger = LoggerFactory.getLogger(WeatherHistoryServiceTest.class);
 
 	@Test
 	public void testCreateRainEntry() throws Exception {

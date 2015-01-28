@@ -1,21 +1,20 @@
 package za.co.johanmynhardt.jweatherhistory.model;
 
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Date;
-import java.util.logging.Logger;
 
-import org.junit.Test;
 import za.co.johanmynhardt.jweatherhistory.impl.config.JWeatherHistoryConfigImpl;
 
 /**
  * Unit test for simple App.
  */
 public class ModelTest {
-	Logger logger = Logger.getLogger(ModelTest.class.getName());
+	Logger logger = LoggerFactory.getLogger(ModelTest.class);
 
 	@Test
 	public void testModels() throws SQLException {
