@@ -1,5 +1,7 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
+import com.google.common.eventbus.EventBus;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,5 +57,10 @@ public class AppConfig {
         final TransactionTemplate template = new TransactionTemplate(transactionManager);
         LOG.debug("transactionTemplate={} created using transactionManager={}", template, transactionManager);
         return template;
+    }
+
+    @Bean
+    public EventBus getEventBus() {
+        return new EventBus();
     }
 }

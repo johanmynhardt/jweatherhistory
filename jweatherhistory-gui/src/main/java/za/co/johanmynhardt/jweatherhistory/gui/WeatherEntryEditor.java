@@ -1,5 +1,7 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
+import com.google.common.eventbus.EventBus;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,7 @@ import java.util.Date;
 
 import static java.lang.String.format;
 
+import za.co.johanmynhardt.jweatherhistory.gui.events.ItemsUpdatedEvent;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
@@ -30,7 +33,6 @@ public class WeatherEntryEditor extends JFrame {
 
 	@Inject
 	private WeatherHistoryService weatherHistoryService;
-	//private final WeatherEntryListener entryListener;
 	private WeatherEntry weatherEntry;
 	JTextField tfDate = new JTextField();
 	JSpinner jSpinnerMin = new JSpinner(new SpinnerNumberModel(0, -100, 100, 1));
@@ -45,6 +47,8 @@ public class WeatherEntryEditor extends JFrame {
 	@Inject
 	private UIBuilderService uiBuilderService;
 
+	@Inject
+	private EventBus eventBus;
 
 	public WeatherEntryEditor() throws HeadlessException {
 		//this.entryListener = listener;
@@ -112,14 +116,15 @@ public class WeatherEntryEditor extends JFrame {
 								rainEntry
 						);
 						weatherHistoryService.updateFromEdit(updateWeatherEntry);
-						// TODO: Add eventbus for this: entryListener.updateItems();
+						eventBus.post(new ItemsUpdatedEvent(){});
+
 						dispose();
 					} else {
 						RainEntry rainEntry = new RainEntry(-1, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
 						WindEntry windEntry = new WindEntry(-1, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry weatherEntry = new WeatherEntry(-1, taDescription.getText(), WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()), new Date(), ((Integer) jSpinnerMin.getValue()), ((Integer) jSpinnerMax.getValue()), windEntry, rainEntry);
 						weatherHistoryService.createWeatherEntry(weatherEntry);
-						// TODO: add eventbust for this: entryListener.updateItems();
+						eventBus.post(new ItemsUpdatedEvent(){});
 						dispose();
 
 					}

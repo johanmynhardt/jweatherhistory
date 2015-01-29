@@ -43,12 +43,9 @@ public class JWeatherHistoryUI {
 		MainFrame mainFrame = context.getBean(MainFrame.class);
 		mainFrame.setVisible(true);
 
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			@Override
-			public void run() {
-				LOG.info("----------------------------------------");
-				LOG.info("Shutting down at " + new Date());
-			}
-		}));
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOG.info("----------------------------------------");
+            LOG.info("Shutting down at " + new Date());
+        }));
 	}
 }

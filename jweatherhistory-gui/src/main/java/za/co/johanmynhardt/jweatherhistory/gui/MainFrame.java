@@ -1,5 +1,8 @@
 package za.co.johanmynhardt.jweatherhistory.gui;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,8 +10,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
@@ -18,12 +19,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import za.co.johanmynhardt.jweatherhistory.gui.events.ItemsUpdatedEvent;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.MenuBarBuilder;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
@@ -33,323 +34,324 @@ import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
  * @author Johan Mynhardt
  */
 @org.springframework.stereotype.Component
-public class MainFrame extends JFrame implements WeatherEntryListener {
+public class MainFrame extends JFrame {
 
-	private final Logger LOG = LoggerFactory.getLogger(MainFrame.class);
+    private final Logger LOG = LoggerFactory.getLogger(MainFrame.class);
 
-	@Inject
-	private WeatherHistoryService weatherHistoryService;
+    @Inject
+    private WeatherHistoryService weatherHistoryService;
 
-	@Inject
-	private UIBuilderService builderService;
+    @Inject
+    private UIBuilderService builderService;
 
-	java.util.List<WeatherEntry> entries = new ArrayList<>();
-	java.util.List<YearItem> yearList = new ArrayList<>();
-	java.util.List<MonthItem> monthList = new ArrayList<>();
-	JTable jTable = new JTable();
-	TableModel tableModel;
-	JButton jButtonNewEntry;
-	JButton jbuttonEditEntry;
-	YearItem selectedYear = new YearItem(-1, "All Time");
-	MonthItem selectedMonth = new MonthItem(-1, "All Months");
-	JComboBox<YearItem> yearSelector = new JComboBox<>(new ComboBoxModel<YearItem>() {
-		//TODO: Clean this model up.
-		Set<ListDataListener> listDataListeners = new HashSet<>();
+    @Inject
+    private WeatherEntryDisplayPanel weatherEntryDisplayPanel;
 
-		@Override
-		public Object getSelectedItem() {
-			return selectedYear;
-		}
+    @Inject
+    private WeatherEntryEditor weatherEntryEditor;
 
-		@Override
-		public void setSelectedItem(Object o) {
-			selectedYear = (YearItem) o;
-			updateItems();
-		}
+    @Inject
+    private EventBus eventBus;
 
-		@Override
-		public int getSize() {
-			return yearList.size();
-		}
+    java.util.List<WeatherEntry> entries = new ArrayList<>();
+    java.util.List<YearItem> yearList = new ArrayList<>();
+    java.util.List<MonthItem> monthList = new ArrayList<>();
+    JTable jTable = new JTable();
+    TableModel tableModel;
+    JButton jButtonNewEntry;
+    JButton jbuttonEditEntry;
+    YearItem selectedYear = new YearItem(-1, "All Time");
+    MonthItem selectedMonth = new MonthItem(-1, "All Months");
 
-		@Override
-		public YearItem getElementAt(int i) {
-			return yearList.get(i);
-		}
+    JComboBox<YearItem> yearSelector = new JComboBox<>(new ComboBoxModel<YearItem>() {
+        //TODO: Clean this model up.
+        Set<ListDataListener> listDataListeners = new HashSet<>();
 
-		@Override
-		public void addListDataListener(ListDataListener listDataListener) {
-			listDataListeners.add(listDataListener);
-		}
+        @Override
+        public Object getSelectedItem() {
+            return selectedYear;
+        }
 
-		@Override
-		public void removeListDataListener(ListDataListener listDataListener) {
-			listDataListeners.remove(listDataListener);
-		}
-	});
+        @Override
+        public void setSelectedItem(Object o) {
+            selectedYear = (YearItem) o;
+            updateItems();
+        }
 
-	JComboBox<MonthItem> monthSelector = new JComboBox<>(new ComboBoxModel<MonthItem>() {
-		Set<ListDataListener> listDataListeners = new HashSet<>();
-		@Override
-		public void setSelectedItem(Object o) {
-			selectedMonth = (MonthItem) o;
-			updateItems();
-		}
+        @Override
+        public int getSize() {
+            return yearList.size();
+        }
 
-		@Override
-		public Object getSelectedItem() {
-			return selectedMonth;
-		}
+        @Override
+        public YearItem getElementAt(int i) {
+            return yearList.get(i);
+        }
 
-		@Override
-		public int getSize() {
-			return monthList.size();
-		}
+        @Override
+        public void addListDataListener(ListDataListener listDataListener) {
+            listDataListeners.add(listDataListener);
+        }
 
-		@Override
-		public MonthItem getElementAt(int i) {
-			return monthList.get(i);
-		}
+        @Override
+        public void removeListDataListener(ListDataListener listDataListener) {
+            listDataListeners.remove(listDataListener);
+        }
+    });
 
-		@Override
-		public void addListDataListener(ListDataListener listDataListener) {
-			listDataListeners.add(listDataListener);
-		}
+    JComboBox<MonthItem> monthSelector = new JComboBox<>(new ComboBoxModel<MonthItem>() {
+        Set<ListDataListener> listDataListeners = new HashSet<>();
 
-		@Override
-		public void removeListDataListener(ListDataListener listDataListener) {
-			listDataListeners.remove(listDataListener);
-		}
-	});
+        @Override
+        public void setSelectedItem(Object o) {
+            selectedMonth = (MonthItem) o;
+            updateItems();
+        }
 
-	@Inject
-	WeatherEntryDisplayPanel weatherEntryDisplayPanel;
+        @Override
+        public Object getSelectedItem() {
+            return selectedMonth;
+        }
 
-	@Inject
-	WeatherEntryEditor weatherEntryEditor;
+        @Override
+        public int getSize() {
+            return monthList.size();
+        }
 
-	private MenuBarBuilder menuBarBuilder;
+        @Override
+        public MonthItem getElementAt(int i) {
+            return monthList.get(i);
+        }
 
-	@PostConstruct
-	public void init() {
-		jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				weatherEntryEditor.editEntry(null);
-			}
-		});
+        @Override
+        public void addListDataListener(ListDataListener listDataListener) {
+            listDataListeners.add(listDataListener);
+        }
 
-		jbuttonEditEntry = builderService.newJButton("Edit Entry", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				weatherEntryEditor.editEntry(entries.get(jTable.getSelectedRow()));
-			}
-		});
+        @Override
+        public void removeListDataListener(ListDataListener listDataListener) {
+            listDataListeners.remove(listDataListener);
+        }
+    });
 
-		menuBarBuilder = builderService.newMenuBarBuilder("File");
+    private MenuBarBuilder menuBarBuilder;
 
-		initFrame();
-	}
+    @PostConstruct
+    public void init() {
+        jButtonNewEntry = builderService.newJButton("New Entry", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                weatherEntryEditor.editEntry(null);
+            }
+        });
 
-	public MainFrame() throws HeadlessException {
-		//initFrame();
+        jbuttonEditEntry = builderService.newJButton("Edit Entry", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                weatherEntryEditor.editEntry(entries.get(jTable.getSelectedRow()));
+            }
+        });
 
-	}
+        menuBarBuilder = builderService.newMenuBarBuilder("File");
 
-	private void initFrame() {
-		try {
-			//http://findicons.com/files/icons/2130/aluminum/59/weather.png
-			setIconImage(new ImageIcon(MainFrame.class.getResource("/icons/weather.png")).getImage());
-		} catch (Exception e) {
-			LOG.warn("Could not set icon image. ({}: {})", e.getClass().getSimpleName(), e.getMessage());
-		}
-		setTitle("JWeatherHistory");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(700, 400);
-		setLocationRelativeTo(null);
-		setLayout(new BorderLayout());
+        eventBus.register(this);
 
-		setJMenuBar(menuBarBuilder.addJMenuItem("Exit", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				System.exit(0);
-			}
-		}).build());
+        initFrame();
+    }
 
-		tableModel = new AbstractTableModel() {
-			public int getRowCount() {
-				return entries.size();
-			}
+    public MainFrame() throws HeadlessException {
+    }
 
-			@Override
-			public int getColumnCount() {
-				return 8;
-			}
+    private void initFrame() {
+        try {
+            //http://findicons.com/files/icons/2130/aluminum/59/weather.png
+            setIconImage(new ImageIcon(MainFrame.class.getResource("/icons/weather.png")).getImage());
+        } catch (Exception e) {
+            LOG.warn("Could not set icon image. ({}: {})", e.getClass().getSimpleName(), e.getMessage());
+        }
+        setTitle("JWeatherHistory");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(700, 400);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-			@Override
-			public Object getValueAt(int row, int column) {
-				WeatherEntry selectedEntry = entries.get(row);
+        setJMenuBar(menuBarBuilder.addJMenuItem("Exit", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                System.exit(0);
+            }
+        }).build());
 
-				switch (column) {
-					case 1:
-						return selectedEntry.getId();
-					case 2:
-						return selectedEntry.getDescription();
-					case 3:
-						return selectedEntry.getCaptureDate() == null ? null : selectedEntry.getCaptureDate();
-					case 4:
-						return selectedEntry.getEntryDate() == null ? null : selectedEntry.getEntryDate();
-					case 5:
-						return selectedEntry.getMinimumTemperature();
-					case 6:
-						return selectedEntry.getMaximumTemperature();
-					default:
-						return null;
-				}
-			}
-		};
+        tableModel = new AbstractTableModel() {
+            public int getRowCount() {
+                return entries.size();
+            }
 
-		TableColumnModel tableColumnModel = createTableColumnModel();
+            @Override
+            public int getColumnCount() {
+                return 8;
+            }
 
-		jTable = new JTable(tableModel, tableColumnModel);
-		DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
-		selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		selectionModel.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent listSelectionEvent) {
-				if (!listSelectionEvent.getValueIsAdjusting()) {
-					jbuttonEditEntry.setEnabled(true);
-				}
+            @Override
+            public Object getValueAt(int row, int column) {
+                WeatherEntry selectedEntry = entries.get(row);
 
-				if (jTable.getSelectedRow() >= 0) {
-					weatherEntryDisplayPanel.displayWeatherEntry(entries.get(jTable.getSelectedRow()));
-				}
-			}
-		});
-		jTable.setSelectionModel(selectionModel);
+                switch (column) {
+                case 1:
+                    return selectedEntry.getId();
+                case 2:
+                    return selectedEntry.getDescription();
+                case 3:
+                    return selectedEntry.getCaptureDate() == null ? null : selectedEntry.getCaptureDate();
+                case 4:
+                    return selectedEntry.getEntryDate() == null ? null : selectedEntry.getEntryDate();
+                case 5:
+                    return selectedEntry.getMinimumTemperature();
+                case 6:
+                    return selectedEntry.getMaximumTemperature();
+                default:
+                    return null;
+                }
+            }
+        };
 
-		JScrollPane scrollPane = new JScrollPane(jTable);
-		scrollPane.setBorder(BorderFactory.createTitledBorder("Weather Entries"));
+        TableColumnModel tableColumnModel = createTableColumnModel();
 
-		JToolBar toolBar = new JToolBar("Weather Entry Actions", JToolBar.HORIZONTAL);
-		toolBar.add(jButtonNewEntry);
-		jbuttonEditEntry.setEnabled(false);
-		toolBar.add(jbuttonEditEntry);
-		toolBar.add(new JToolBar.Separator());
+        jTable = new JTable(tableModel, tableColumnModel);
+        DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
+        selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selectionModel.addListSelectionListener(listSelectionEvent -> {
+            if (!listSelectionEvent.getValueIsAdjusting()) {
+                jbuttonEditEntry.setEnabled(true);
+            }
 
-		toolBar.add(monthSelector);
-		toolBar.add(yearSelector);
+            if (jTable.getSelectedRow() >= 0) {
+                weatherEntryDisplayPanel.displayWeatherEntry(entries.get(jTable.getSelectedRow()));
+            }
+        });
+        jTable.setSelectionModel(selectionModel);
 
-		add(toolBar, BorderLayout.NORTH);
-		add(scrollPane, BorderLayout.CENTER);
-		add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
+        JScrollPane scrollPane = new JScrollPane(jTable);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Weather Entries"));
 
-		updateItems();
-	}
+        JToolBar toolBar = new JToolBar("Weather Entry Actions", JToolBar.HORIZONTAL);
+        toolBar.add(jButtonNewEntry);
+        jbuttonEditEntry.setEnabled(false);
+        toolBar.add(jbuttonEditEntry);
+        toolBar.add(new JToolBar.Separator());
 
-	@Override
-	public void updateItems() {
-		entries = weatherHistoryService.getAllWeatherEntries();
+        toolBar.add(monthSelector);
+        toolBar.add(yearSelector);
 
-		Set<YearItem> years = new TreeSet<>();
-		years.add(new YearItem(-1, "All Time"));
-		Calendar calendar = Calendar.getInstance();
+        add(toolBar, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
 
-		Set<MonthItem> months = new TreeSet<>();
-		months.add(new MonthItem(-1, "All Months"));
-		months.add(new MonthItem(Calendar.JANUARY, "January"));
-		months.add(new MonthItem(Calendar.FEBRUARY, "February"));
-		months.add(new MonthItem(Calendar.MARCH, "March"));
-		months.add(new MonthItem(Calendar.APRIL, "April"));
-		months.add(new MonthItem(Calendar.MAY, "May"));
-		months.add(new MonthItem(Calendar.JUNE, "June"));
-		months.add(new MonthItem(Calendar.JULY, "July"));
-		months.add(new MonthItem(Calendar.AUGUST, "August"));
-		months.add(new MonthItem(Calendar.SEPTEMBER, "September"));
-		months.add(new MonthItem(Calendar.OCTOBER, "October"));
-		months.add(new MonthItem(Calendar.NOVEMBER, "November"));
-		months.add(new MonthItem(Calendar.DECEMBER, "December"));
+        eventBus.post(new ItemsUpdatedEvent() {
+        });
 
-		monthList = new ArrayList<>(months);
+        //updateItems();
+    }
 
-		java.util.List<WeatherEntry> toKeep = new ArrayList<>();
-		for (WeatherEntry entry : entries) {
-			calendar.setTime(entry.getEntryDate());
-			years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR)+""));
-			if (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) {
-				if (selectedMonth.month == calendar.get(Calendar.MONTH) || selectedMonth.month == -1)
-					toKeep.add(entry);
-			}
-		}
-		yearList = new ArrayList<>(years);
+    @Subscribe
+    public void receiveUpdateItems(ItemsUpdatedEvent event) {
+        LOG.debug("Receive itemsUpdatedEvent={}", event);
+        updateItems();
+    }
 
+    private void updateItems() {
+        entries = weatherHistoryService.getAllWeatherEntries();
 
+        Set<YearItem> years = new TreeSet<>();
+        years.add(new YearItem(-1, "All Time"));
+        Calendar calendar = Calendar.getInstance();
 
-		Collections.sort(entries, new Comparator<WeatherEntry>() {
-			@Override
-			public int compare(WeatherEntry weatherEntry, WeatherEntry weatherEntry2) {
-				return weatherEntry.getEntryDate().compareTo(weatherEntry2.getEntryDate());
-			}
-		});
+        Set<MonthItem> months = new TreeSet<>();
+        months.add(new MonthItem(-1, "All Months"));
+        months.add(new MonthItem(Calendar.JANUARY, "January"));
+        months.add(new MonthItem(Calendar.FEBRUARY, "February"));
+        months.add(new MonthItem(Calendar.MARCH, "March"));
+        months.add(new MonthItem(Calendar.APRIL, "April"));
+        months.add(new MonthItem(Calendar.MAY, "May"));
+        months.add(new MonthItem(Calendar.JUNE, "June"));
+        months.add(new MonthItem(Calendar.JULY, "July"));
+        months.add(new MonthItem(Calendar.AUGUST, "August"));
+        months.add(new MonthItem(Calendar.SEPTEMBER, "September"));
+        months.add(new MonthItem(Calendar.OCTOBER, "October"));
+        months.add(new MonthItem(Calendar.NOVEMBER, "November"));
+        months.add(new MonthItem(Calendar.DECEMBER, "December"));
 
-		entries.retainAll(toKeep);
+        monthList = new ArrayList<>(months);
 
+        java.util.List<WeatherEntry> toKeep = entries.stream()
+                .filter((weatherEntry) -> {
+                    calendar.setTime(weatherEntry.getEntryDate());
+                    years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR) + ""));
+                    return (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) && (selectedMonth.month == calendar.get(Calendar.MONTH)
+                            || selectedMonth.month == -1);
+                })
+                .sorted((weatherEntry, weatherEntry2) -> weatherEntry.getEntryDate().compareTo(weatherEntry2.getEntryDate()))
+                .collect(Collectors.toList());
 
-		((AbstractTableModel) tableModel).fireTableDataChanged();
-		jbuttonEditEntry.setEnabled(false);
-	}
+        yearList = new ArrayList<>(years);
 
-	private class YearItem implements Comparable<YearItem> {
-		final int year;
-		final String display;
+        entries.retainAll(toKeep);
 
-		private YearItem(int year, String display) {
-			this.year = year;
-			this.display = display;
-		}
+        ((AbstractTableModel) tableModel).fireTableDataChanged();
+        jbuttonEditEntry.setEnabled(false);
+    }
 
-		@Override
-		public String toString() {
-			return display;
-		}
+    private class YearItem implements Comparable<YearItem> {
+        final int year;
+        final String display;
 
-		@Override
-		public int compareTo(YearItem yearItem) {
-			return Integer.compare(this.year, yearItem.year);
-		}
-	}
+        private YearItem(int year, String display) {
+            this.year = year;
+            this.display = display;
+        }
 
-	private class MonthItem implements Comparable<MonthItem> {
-		final int month;
-		final String display;
+        @Override
+        public String toString() {
+            return display;
+        }
 
-		private MonthItem(int month, String display) {
-			this.display = display;
-			this.month = month;
-		}
+        @Override
+        public int compareTo(YearItem yearItem) {
+            return Integer.compare(this.year, yearItem.year);
+        }
+    }
 
-		@Override
-		public String toString() {
-			return display;
-		}
+    private class MonthItem implements Comparable<MonthItem> {
+        final int month;
+        final String display;
 
-		@Override
-		public int compareTo(MonthItem monthItem) {
-			return Integer.compare(this.month, monthItem.month);
-		}
-	}
+        private MonthItem(int month, String display) {
+            this.display = display;
+            this.month = month;
+        }
 
-	private TableColumnModel createTableColumnModel() {
-		TableColumnModel tableColumnModel = new DefaultTableColumnModel();
+        @Override
+        public String toString() {
+            return display;
+        }
 
-		tableColumnModel.addColumn(builderService.getTableColumn(1, "ID"));
-		tableColumnModel.addColumn(builderService.getTableColumn(4, "Entry Date"));
-		tableColumnModel.addColumn(builderService.getTableColumn(2, "Description"));
-		tableColumnModel.addColumn(builderService.getTableColumn(5, "Minimum Temperature"));
-		tableColumnModel.addColumn(builderService.getTableColumn(6, "Maximum Temperature"));
-		tableColumnModel.addColumn(builderService.getTableColumn(3, "Date Captured"));
+        @Override
+        public int compareTo(MonthItem monthItem) {
+            return Integer.compare(this.month, monthItem.month);
+        }
+    }
 
-		return tableColumnModel;
-	}
+    private TableColumnModel createTableColumnModel() {
+        TableColumnModel tableColumnModel = new DefaultTableColumnModel();
+
+        tableColumnModel.addColumn(builderService.getTableColumn(1, "ID"));
+        tableColumnModel.addColumn(builderService.getTableColumn(4, "Entry Date"));
+        tableColumnModel.addColumn(builderService.getTableColumn(2, "Description"));
+        tableColumnModel.addColumn(builderService.getTableColumn(5, "Minimum Temperature"));
+        tableColumnModel.addColumn(builderService.getTableColumn(6, "Maximum Temperature"));
+        tableColumnModel.addColumn(builderService.getTableColumn(3, "Date Captured"));
+
+        return tableColumnModel;
+    }
 
 }
