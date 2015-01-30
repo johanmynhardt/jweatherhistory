@@ -11,9 +11,10 @@ START_SCRIPT=$DIST_DIR/jweatherhistory.sh
 rm -rf $DIST_DIR;
 mkdir -p $LIB_DIR;
 
-for i in $(find . -iname jweather*.jar); do cp $i $LIB_DIR/; done;
-for i in $(find $M2_REPO/com/jgoodies -iname *.jar); do cp $i $LIB_DIR/; done;
-for i in $(find $M2_REPO/org/apache -iname *$DERBY_JAR); do cp $i $LIB_DIR/; done;
+#for i in $(find . -iname jweather*.jar); do cp $i $LIB_DIR/; done;
+#for i in $(find $M2_REPO/com/jgoodies -iname *.jar); do cp $i $LIB_DIR/; done;
+#for i in $(find $M2_REPO/org/apache -iname *$DERBY_JAR); do cp $i $LIB_DIR/; done;
+for i in $(find jweatherhistory-run -iname *.jar); do cp $i $LIB_DIR/; done;
 
 echo "#! /usr/bin/env bash
 \
