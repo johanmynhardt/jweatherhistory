@@ -1,5 +1,6 @@
-package za.co.johanmynhardt.jweatherhistory.gui;
+package za.co.johanmynhardt.jweatherhistory.impl.config;
 
+import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 
+import java.sql.SQLException;
+
 /**
  * @author johan
  */
@@ -33,9 +36,18 @@ public class AppConfig {
     }
 
     @Bean
-    public DataSource getDataSource(@Value("${dbUrl}") String dbUrl) {
+    public DataSource getDataSource(@Value("${dbUrl}") String dbUrl, DbBootstrapper bootstrapper) {
+        Preconditions.checkArgument(!(dbUrl == null || dbUrl.trim().isEmpty()), "non-null, not-empty dbUrl expected.");
+
         LOG.debug("dbUrl={}", dbUrl);
-        return new DriverManagerDataSource(dbUrl);
+        final DataSource driverManagerDataSource = new DriverManagerDataSource(dbUrl);
+
+        try {
+            bootstrapper.testDataSource(driverManagerDataSource, true);
+            return driverManagerDataSource;
+        } catch (SQLException e) {
+            throw new RuntimeException("Unexpected database error", e);
+        }
     }
 
     @Bean

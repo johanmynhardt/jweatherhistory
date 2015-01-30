@@ -32,16 +32,13 @@ public class JWeatherHistoryUI {
 
 		ApplicationContext context = new AnnotationConfigApplicationContext(JWeatherHistoryUI.class);
 
+        LOG.info("----------------------------------------");
+        LOG.info("Starting at " + new Date());
+        LOG.debug("Launching JWeatherHistoryUI...");
 
-		//JWeatherHistoryConfig config = new JWeatherHistoryConfigImpl();
-		//config.bootstrapLog();
+        MainFrame mainFrame = context.getBean(MainFrame.class);
+        mainFrame.setVisible(true);
 
-		LOG.info("----------------------------------------");
-		LOG.info("Starting at " + new Date());
-		LOG.debug("Launching JWeatherHistoryUI...");
-
-		MainFrame mainFrame = context.getBean(MainFrame.class);
-		mainFrame.setVisible(true);
 
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOG.info("----------------------------------------");
