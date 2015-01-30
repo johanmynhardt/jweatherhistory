@@ -112,11 +112,11 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
             boolean updated = false;
             if (weatherEntry1.getRainEntry() != null) {
-                createdRainEntry = createRainEntry(weatherEntry1.getRainEntry().description, weatherEntry1.getRainEntry().volume, weatherEntry1);
+                createdRainEntry = createRainEntry(weatherEntry1.getRainEntry().getDescription(), weatherEntry1.getRainEntry().getVolume(), weatherEntry1);
                 updated = true;
             }
             if (weatherEntry1.getWindEntry() != null) {
-                createdWindEntry = createWindEntry(weatherEntry1.getWindEntry().description, weatherEntry1.getWindEntry().windDirection, weatherEntry1.getWindEntry().windspeed, weatherEntry1);
+                createdWindEntry = createWindEntry(weatherEntry1.getWindEntry().getDescription(), weatherEntry1.getWindEntry().getWindDirection(), weatherEntry1.getWindEntry().getWindspeed(), weatherEntry1);
                 updated = true;
             }
 
@@ -256,8 +256,8 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
             PreparedStatement preparedStatement = con.prepareStatement("UPDATE WEATHERENTRY SET DESCRIPTION = ?, WINDENTRY_ID = ?, RAINENTRY_ID = ? WHERE ID = ?");
 
             preparedStatement.setString(1, weatherEntry.getDescription());
-            preparedStatement.setLong(2, weatherEntry.getWindEntry().id);
-            preparedStatement.setLong(3, weatherEntry.getRainEntry().id);
+            preparedStatement.setLong(2, weatherEntry.getWindEntry().getId());
+            preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
             preparedStatement.setLong(4, weatherEntry.getId());
             return preparedStatement;
         });
@@ -291,10 +291,10 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                             "UPDATE WINDENTRY SET DESCRIPTION = ?, WINDDIRECTION = ?, WINDSPEED = ? WHERE ID = ?"
                     );
 
-                    preparedStatement.setString(1, weatherEntry.getWindEntry().description);
-                    preparedStatement.setString(2, weatherEntry.getWindEntry().windDirection.name());
-                    preparedStatement.setInt(3, weatherEntry.getWindEntry().windspeed);
-                    preparedStatement.setLong(4, weatherEntry.getWindEntry().id);
+                    preparedStatement.setString(1, weatherEntry.getWindEntry().getDescription());
+                    preparedStatement.setString(2, weatherEntry.getWindEntry().getWindDirection().name());
+                    preparedStatement.setInt(3, weatherEntry.getWindEntry().getWindspeed());
+                    preparedStatement.setLong(4, weatherEntry.getWindEntry().getId());
                     return preparedStatement;
                 });
 
@@ -302,9 +302,9 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                     final PreparedStatement preparedStatement = con.prepareStatement(
                             "UPDATE RAINENTRY SET DESCRIPTION = ?, VOLUME = ? WHERE ID = ?"
                     );
-                    preparedStatement.setString(1, weatherEntry.getRainEntry().description);
-                    preparedStatement.setInt(2, weatherEntry.getRainEntry().volume);
-                    preparedStatement.setLong(3, weatherEntry.getRainEntry().id);
+                    preparedStatement.setString(1, weatherEntry.getRainEntry().getDescription());
+                    preparedStatement.setInt(2, weatherEntry.getRainEntry().getVolume());
+                    preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
                     return preparedStatement;
                 });
             }

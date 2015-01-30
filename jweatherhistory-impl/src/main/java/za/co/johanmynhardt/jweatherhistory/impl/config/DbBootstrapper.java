@@ -14,8 +14,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import za.co.johanmynhardt.jweatherhistory.api.config.JWeatherHistoryConfig;
-
 /**
  * @author johan
  */
@@ -52,7 +50,7 @@ public class DbBootstrapper {
         LOG.info("Loading /sql/weatherhistory.sql");
         BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(
-                        JWeatherHistoryConfig.class.getResourceAsStream("/sql/weatherhistory.sql")
+                        DbBootstrapper.class.getResourceAsStream("/sql/weatherhistory.sql")
                 )
         );
 

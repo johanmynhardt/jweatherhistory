@@ -6,11 +6,11 @@ import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
  * @author Johan Mynhardt
  */
 public class WindEntry {
-	public final long id;
-	public final String description;
-	public final WindDirection windDirection;
-	public final int windspeed;
-	public final WeatherEntry weatherEntry;
+	private long id;
+	private String description;
+	private WindDirection windDirection;
+	private int windspeed;
+	private WeatherEntry weatherEntry;
 
 	public WindEntry(long id, String description, WindDirection windDirection, int windspeed, WeatherEntry weatherEntry) {
 		this.id = id;
@@ -20,7 +20,50 @@ public class WindEntry {
 		this.weatherEntry = weatherEntry;
 	}
 
-	@Override
+    public WindEntry() {
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public WindDirection getWindDirection() {
+        return windDirection;
+    }
+
+    public void setWindDirection(WindDirection windDirection) {
+        this.windDirection = windDirection;
+    }
+
+    public int getWindspeed() {
+        return windspeed;
+    }
+
+    public void setWindspeed(int windspeed) {
+        this.windspeed = windspeed;
+    }
+
+    public WeatherEntry getWeatherEntry() {
+        return weatherEntry;
+    }
+
+    public void setWeatherEntry(WeatherEntry weatherEntry) {
+        this.weatherEntry = weatherEntry;
+    }
+
+    @Override
 	public String toString() {
 		return "WindEntry{" +
 				"id=" + id +

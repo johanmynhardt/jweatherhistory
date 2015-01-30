@@ -5,6 +5,7 @@ import com.google.common.eventbus.EventBus;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
@@ -24,12 +25,13 @@ import java.sql.SQLException;
  * @author johan
  */
 @Configuration
+@ComponentScan("za.co.johanmynhardt.jweatherhistory")
 public class AppConfig {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AppConfig.class);
 
     @Bean
-    public PropertySourcesPlaceholderConfigurer myProperties() {
+    public static PropertySourcesPlaceholderConfigurer myProperties() {
         final PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
         propertySourcesPlaceholderConfigurer.setLocation(new ClassPathResource("/application.properties"));
         return propertySourcesPlaceholderConfigurer;

@@ -85,9 +85,9 @@ public class WeatherEntryDisplayPanel extends JPanel {
 		minTempDisplay.setText(weatherEntry.getMinimumTemperature() + "");
 		maxTempDisplay.setText(weatherEntry.getMaximumTemperature() + "");
 		descriptionDisplay.setText(weatherEntry.getDescription().trim().isEmpty() ? "No description" : weatherEntry.getDescription());
-		windDirectionDisplay.setText(weatherEntry.getWindEntry().windDirection.name());
-		windSpeedDisplay.setText(weatherEntry.getWindEntry().windspeed + "");
-		rainVolumeDisplay.setText(weatherEntry.getRainEntry().volume + "");
-		rainDescriptionDisplay.setText(weatherEntry.getRainEntry().description);
+		windDirectionDisplay.setText(weatherEntry.getWindEntry().getWindDirection().name());
+		windSpeedDisplay.setText(weatherEntry.getWindEntry().getWindspeed() + "");
+		rainVolumeDisplay.setText(weatherEntry.getRainEntry().getVolume() + "");
+		rainDescriptionDisplay.setText(weatherEntry.getRainEntry().getDescription());
 	}
 }

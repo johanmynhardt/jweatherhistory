@@ -51,14 +51,12 @@ public class WeatherEntryEditor extends JFrame {
 	private EventBus eventBus;
 
 	public WeatherEntryEditor() throws HeadlessException {
-		//this.entryListener = listener;
 		setTitle("Add/Edit WeatherEntry");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		setSize(700, 400);
 
 		setLocationRelativeTo(null);
-		setVisible(true);
 	}
 
 	@PostConstruct
@@ -103,8 +101,8 @@ public class WeatherEntryEditor extends JFrame {
 				//TODO use databinding?
 				try {
 					if (weatherEntry != null) {
-						RainEntry rainEntry = new RainEntry(weatherEntry.getRainEntry().id, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-						WindEntry windEntry = new WindEntry(weatherEntry.getWindEntry().id, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						RainEntry rainEntry = new RainEntry(weatherEntry.getRainEntry().getId(), (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(weatherEntry.getWindEntry().getId(), taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry updateWeatherEntry = new WeatherEntry(
 								weatherEntry.getId(),
 								taDescription.getText(),
@@ -149,11 +147,11 @@ public class WeatherEntryEditor extends JFrame {
 			jSpinnerMin.setValue(weatherEntry.getMinimumTemperature());
 			jSpinnerMax.setValue(weatherEntry.getMaximumTemperature());
 			taDescription.setText(weatherEntry.getDescription());
-			windDirectionJComboBox.setSelectedItem(weatherEntry.getWindEntry().windDirection);
-			jSpinnerWindSpeed.setValue(weatherEntry.getWindEntry().windspeed);
-			jSpinnerRainVolume.setValue(weatherEntry.getRainEntry().volume);
-			taWindDescription.setText(weatherEntry.getWindEntry().description);
-			taRainDescription.setText(weatherEntry.getRainEntry().description);
+			windDirectionJComboBox.setSelectedItem(weatherEntry.getWindEntry().getWindDirection());
+			jSpinnerWindSpeed.setValue(weatherEntry.getWindEntry().getWindspeed());
+			jSpinnerRainVolume.setValue(weatherEntry.getRainEntry().getVolume());
+			taWindDescription.setText(weatherEntry.getWindEntry().getDescription());
+			taRainDescription.setText(weatherEntry.getRainEntry().getDescription());
 		}
 		setVisible(true);
 	}

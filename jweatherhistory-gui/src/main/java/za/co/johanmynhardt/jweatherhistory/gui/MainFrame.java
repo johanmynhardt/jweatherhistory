@@ -3,6 +3,10 @@ package za.co.johanmynhardt.jweatherhistory.gui;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +21,11 @@ import javax.swing.table.TableModel;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -24,6 +33,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import za.co.johanmynhardt.jweatherhistory.api.data.IDataSerializer;
 import za.co.johanmynhardt.jweatherhistory.gui.events.ItemsUpdatedEvent;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.MenuBarBuilder;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
@@ -34,7 +44,7 @@ import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
  * @author Johan Mynhardt
  */
 @org.springframework.stereotype.Component
-public class MainFrame extends JFrame {
+public class MainFrame extends JFrame implements ApplicationContextAware {
 
     private final Logger LOG = LoggerFactory.getLogger(MainFrame.class);
 
@@ -52,6 +62,17 @@ public class MainFrame extends JFrame {
 
     @Inject
     private EventBus eventBus;
+
+    @Inject
+    IDataSerializer dataSerializer;
+
+    private ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+        LOG.debug("applicationContext={}", this.applicationContext);
+    }
 
     java.util.List<WeatherEntry> entries = new ArrayList<>();
     java.util.List<YearItem> yearList = new ArrayList<>();
@@ -134,7 +155,8 @@ public class MainFrame extends JFrame {
         }
     });
 
-    private MenuBarBuilder menuBarBuilder;
+    private MenuBarBuilder fileMenuBuilder;
+    private MenuBarBuilder dataMenuBuilder;
 
     @PostConstruct
     public void init() {
@@ -152,7 +174,8 @@ public class MainFrame extends JFrame {
             }
         });
 
-        menuBarBuilder = builderService.newMenuBarBuilder("File");
+        fileMenuBuilder = builderService.newMenuBarBuilder("File");
+        dataMenuBuilder = builderService.newMenuBarBuilder("Data");
 
         eventBus.register(this);
 
@@ -175,12 +198,46 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        setJMenuBar(menuBarBuilder.addJMenuItem("Exit", new AbstractAction() {
+        final JMenu fileMenu = fileMenuBuilder.addJMenuItem("Exit", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 System.exit(0);
             }
-        }).build());
+        }).build().getMenu(0);
+
+        JMenu dataMenu = new JMenu("Data");
+
+        dataMenu.add(newMenuItem("Export", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    final File file = Files.createTempFile("jweatherhistory", dataSerializer.getExtension()).toFile();
+                    dataSerializer.exportWeatherEntries(new FileOutputStream(file));
+                    LOG.info("Exported data to {}", file);
+                } catch (IOException e1) {
+                    LOG.error("Error", e1);
+                }
+            }
+        }));
+
+        dataMenu.add(newMenuItem("Import", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    dataSerializer.importWeatherEntries(new FileInputStream(new File("/tmp/jweatherhistory6931970176828581665.json")));
+                    eventBus.post(new ItemsUpdatedEvent() {
+                    });
+                } catch (IOException e1) {
+                    LOG.error("Error", e1);
+                }
+            }
+        }));
+
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(fileMenu);
+        menuBar.add(dataMenu);
+
+        setJMenuBar(menuBar);
 
         tableModel = new AbstractTableModel() {
             public int getRowCount() {
@@ -247,10 +304,13 @@ public class MainFrame extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
         add(weatherEntryDisplayPanel, BorderLayout.SOUTH);
 
-        eventBus.post(new ItemsUpdatedEvent() {
-        });
+    }
 
-        //updateItems();
+    private JMenuItem newMenuItem(String title, Action action) {
+        JMenuItem menuItem = new JMenuItem();
+        menuItem.setText(title);
+        menuItem.addActionListener(action);
+        return menuItem;
     }
 
     @Subscribe
