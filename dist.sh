@@ -1,26 +1,41 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-DERBY_VERSION=10.9.1.0
-DERBY_JAR=derby-$DERBY_VERSION.jar
-M2_HOME=$HOME/.m2
-M2_REPO=$M2_HOME/repository
-DIST_DIR=jweatherhistory-dist
-LIB_DIR=$DIST_DIR/lib
-START_SCRIPT=$DIST_DIR/jweatherhistory.sh
+DIST_DIR="jweatherhistory-dist"
+LIB_DIR="$DIST_DIR/lib"
+START_SCRIPT="$DIST_DIR/jweatherhistory.sh"
 
-rm -rf $DIST_DIR;
-mkdir -p $LIB_DIR;
+echo "==> Building project and gathering dependencies..."
+# This builds all modules and copies runtime dependencies to jweatherhistory-run/target/lib
+mvn clean package -DskipTests
 
-#for i in $(find . -iname jweather*.jar); do cp $i $LIB_DIR/; done;
-#for i in $(find $M2_REPO/com/jgoodies -iname *.jar); do cp $i $LIB_DIR/; done;
-#for i in $(find $M2_REPO/org/apache -iname *$DERBY_JAR); do cp $i $LIB_DIR/; done;
-for i in $(find jweatherhistory-run -iname *.jar); do cp $i $LIB_DIR/; done;
+echo "==> Preparing distribution directory..."
+rm -rf "$DIST_DIR"
+mkdir -p "$LIB_DIR"
 
-echo "#! /usr/bin/env bash
-\
-java -cp \"lib/*\" za.co.johanmynhardt.jweatherhistory.gui.JWeatherHistoryUI\
-" | tee $START_SCRIPT
+echo "==> Copying dependencies..."
+# Copy all resolved Maven dependencies from the run module
+if [ -d "jweatherhistory-run/target/lib" ]; then
+    cp jweatherhistory-run/target/lib/*.jar "$LIB_DIR/"
+else
+    echo "Warning: jweatherhistory-run/target/lib not found. Dependencies may be missing."
+fi
 
-chmod a+x $START_SCRIPT
+echo "==> Copying project jars..."
+# Copy the built project jars (excluding sources and javadoc)
+for jar in $(find . -path "*/target/jweatherhistory-*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar"); do
+    cp "$jar" "$LIB_DIR/"
+done
 
-tar jcvf jweatherhistory.tar.bz2 $DIST_DIR
+echo "==> Creating start script..."
+cat > "$START_SCRIPT" << 'EOF'
+#!/usr/bin/env bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+java -cp "$SCRIPT_DIR/lib/*" za.co.johanmynhardt.jweatherhistory.gui.JWeatherHistoryUI
+EOF
+
+chmod +x "$START_SCRIPT"
+
+echo "==> Creating archive..."
+tar -cjvf jweatherhistory.tar.bz2 "$DIST_DIR"
+
+echo "==> Done! Distribution is ready in '$DIST_DIR' and 'jweatherhistory.tar.bz2'"
