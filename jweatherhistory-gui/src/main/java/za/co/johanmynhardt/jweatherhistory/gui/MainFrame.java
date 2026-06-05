@@ -255,17 +255,17 @@ public class MainFrame extends JFrame implements ApplicationContextAware {
 
                 switch (column) {
                 case 1:
-                    return selectedEntry.getId();
+                    return selectedEntry.id();
                 case 2:
-                    return selectedEntry.getDescription();
+                    return selectedEntry.description();
                 case 3:
-                    return selectedEntry.getCaptureDate() == null ? null : selectedEntry.getCaptureDate();
+                    return selectedEntry.captureDate() == null ? null : selectedEntry.captureDate();
                 case 4:
-                    return selectedEntry.getEntryDate() == null ? null : selectedEntry.getEntryDate();
+                    return selectedEntry.entryDate() == null ? null : selectedEntry.entryDate();
                 case 5:
-                    return selectedEntry.getMinimumTemperature();
+                    return selectedEntry.minimumTemperature();
                 case 6:
-                    return selectedEntry.getMaximumTemperature();
+                    return selectedEntry.maximumTemperature();
                 default:
                     return null;
                 }
@@ -345,12 +345,12 @@ public class MainFrame extends JFrame implements ApplicationContextAware {
 
         java.util.List<WeatherEntry> toKeep = entries.stream()
                 .filter((weatherEntry) -> {
-                    calendar.setTime(weatherEntry.getEntryDate());
+                    calendar.setTime(weatherEntry.entryDate());
                     years.add(new YearItem(calendar.get(Calendar.YEAR), calendar.get(Calendar.YEAR) + ""));
                     return (selectedYear.year == calendar.get(Calendar.YEAR) || selectedYear.year == -1) && (selectedMonth.month == calendar.get(Calendar.MONTH)
                             || selectedMonth.month == -1);
                 })
-                .sorted((weatherEntry, weatherEntry2) -> weatherEntry.getEntryDate().compareTo(weatherEntry2.getEntryDate()))
+                .sorted((weatherEntry, weatherEntry2) -> weatherEntry.entryDate().compareTo(weatherEntry2.entryDate()))
                 .collect(Collectors.toList());
 
         yearList = new ArrayList<>(years);

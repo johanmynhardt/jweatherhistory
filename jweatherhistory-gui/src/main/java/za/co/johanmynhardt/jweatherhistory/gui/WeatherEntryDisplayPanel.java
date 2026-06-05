@@ -80,14 +80,14 @@ public class WeatherEntryDisplayPanel extends JPanel {
 	}
 
 	public void displayWeatherEntry(WeatherEntry weatherEntry) {
-		entryDateDisplay.setText(weatherEntry.getEntryDate().toString());
-		captureDateDisplay.setText(weatherEntry.getCaptureDate().toString());
-		minTempDisplay.setText(weatherEntry.getMinimumTemperature() + "");
-		maxTempDisplay.setText(weatherEntry.getMaximumTemperature() + "");
-		descriptionDisplay.setText(weatherEntry.getDescription().trim().isEmpty() ? "No description" : weatherEntry.getDescription());
-		windDirectionDisplay.setText(weatherEntry.getWindEntry().getWindDirection().name());
-		windSpeedDisplay.setText(weatherEntry.getWindEntry().getWindspeed() + "");
-		rainVolumeDisplay.setText(weatherEntry.getRainEntry().getVolume() + "");
-		rainDescriptionDisplay.setText(weatherEntry.getRainEntry().getDescription());
+		entryDateDisplay.setText(weatherEntry.entryDate().toString());
+		captureDateDisplay.setText(weatherEntry.captureDate().toString());
+		minTempDisplay.setText(weatherEntry.minimumTemperature() + "");
+		maxTempDisplay.setText(weatherEntry.maximumTemperature() + "");
+		descriptionDisplay.setText(weatherEntry.description().trim().isEmpty() ? "No description" : weatherEntry.description());
+		windDirectionDisplay.setText(weatherEntry.windEntry().windDirection().name());
+		windSpeedDisplay.setText(weatherEntry.windEntry().windspeed() + "");
+		rainVolumeDisplay.setText(weatherEntry.rainEntry().volume() + "");
+		rainDescriptionDisplay.setText(weatherEntry.rainEntry().description());
 	}
 }

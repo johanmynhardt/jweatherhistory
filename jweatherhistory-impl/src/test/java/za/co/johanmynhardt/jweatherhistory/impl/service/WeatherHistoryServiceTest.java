@@ -42,7 +42,7 @@ public class WeatherHistoryServiceTest {
         logger.info("weatherEntry = {}", weatherEntry);
         
         assertNotNull("Created WeatherEntry should not be null", weatherEntry);
-        assertTrue("Created WeatherEntry should have an ID > 0", weatherEntry.getId() > 0);
+        assertTrue("Created WeatherEntry should have an ID > 0", weatherEntry.id() > 0);
         
         weatherHistoryService.getAllWeatherEntries();
     }

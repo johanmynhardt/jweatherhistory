@@ -85,11 +85,11 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                         Statement.RETURN_GENERATED_KEYS
                 );
 
-                preparedStatement.setString(1, weatherEntry.getDescription());
-                preparedStatement.setInt(2, weatherEntry.getMinimumTemperature());
-                preparedStatement.setInt(3, weatherEntry.getMaximumTemperature());
-                preparedStatement.setDate(4, new java.sql.Date(weatherEntry.getEntryDate().getTime()));
-                preparedStatement.setDate(5, new java.sql.Date(weatherEntry.getCaptureDate().getTime()));
+                preparedStatement.setString(1, weatherEntry.description());
+                preparedStatement.setInt(2, weatherEntry.minimumTemperature());
+                preparedStatement.setInt(3, weatherEntry.maximumTemperature());
+                preparedStatement.setDate(4, new java.sql.Date(weatherEntry.entryDate().getTime()));
+                preparedStatement.setDate(5, new java.sql.Date(weatherEntry.captureDate().getTime()));
 
                 return preparedStatement;
             }, generatedKeyHolder);
@@ -98,25 +98,25 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
             final WeatherEntry weatherEntry1 = new WeatherEntry(
                     generatedKeyHolder.getKey().longValue(),
-                    weatherEntry.getDescription(),
-                    weatherEntry.getEntryDate(),
-                    weatherEntry.getCaptureDate(),
-                    weatherEntry.getMinimumTemperature(),
-                    weatherEntry.getMaximumTemperature(),
-                    weatherEntry.getWindEntry(),
-                    weatherEntry.getRainEntry()
+                    weatherEntry.description(),
+                    weatherEntry.entryDate(),
+                    weatherEntry.captureDate(),
+                    weatherEntry.minimumTemperature(),
+                    weatherEntry.maximumTemperature(),
+                    weatherEntry.windEntry(),
+                    weatherEntry.rainEntry()
             );
 
             WindEntry createdWindEntry = null;
             RainEntry createdRainEntry = null;
 
             boolean updated = false;
-            if (weatherEntry1.getRainEntry() != null) {
-                createdRainEntry = createRainEntry(weatherEntry1.getRainEntry().getDescription(), weatherEntry1.getRainEntry().getVolume(), weatherEntry1);
+            if (weatherEntry1.rainEntry() != null) {
+                createdRainEntry = createRainEntry(weatherEntry1.rainEntry().description(), weatherEntry1.rainEntry().volume(), weatherEntry1);
                 updated = true;
             }
-            if (weatherEntry1.getWindEntry() != null) {
-                createdWindEntry = createWindEntry(weatherEntry1.getWindEntry().getDescription(), weatherEntry1.getWindEntry().getWindDirection(), weatherEntry1.getWindEntry().getWindspeed(), weatherEntry1);
+            if (weatherEntry1.windEntry() != null) {
+                createdWindEntry = createWindEntry(weatherEntry1.windEntry().description(), weatherEntry1.windEntry().windDirection(), weatherEntry1.windEntry().windspeed(), weatherEntry1);
                 updated = true;
             }
 
@@ -124,12 +124,12 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
             if (updated) {
                 weatherEntry2 = new WeatherEntry(
-                        weatherEntry1.getId(),
-                        weatherEntry1.getDescription(),
-                        weatherEntry1.getEntryDate(),
-                        weatherEntry1.getCaptureDate(),
-                        weatherEntry1.getMinimumTemperature(),
-                        weatherEntry1.getMaximumTemperature(),
+                        weatherEntry1.id(),
+                        weatherEntry1.description(),
+                        weatherEntry1.entryDate(),
+                        weatherEntry1.captureDate(),
+                        weatherEntry1.minimumTemperature(),
+                        weatherEntry1.maximumTemperature(),
                         createdWindEntry,
                         createdRainEntry
                 );
@@ -157,7 +157,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
 
             preparedStatement.setString(1, description);
             preparedStatement.setInt(2, volume);
-            preparedStatement.setLong(3, weatherEntry.getId());
+            preparedStatement.setLong(3, weatherEntry.id());
 
             LOG.debug("Returning preparedStatement={}", preparedStatement);
 
@@ -186,7 +186,7 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
             statement.setString(1, description);
             statement.setString(2, direction.name());
             statement.setInt(3, windSpeed);
-            statement.setLong(4, weatherEntry.getId());
+            statement.setLong(4, weatherEntry.id());
 
             return statement;
         }, keyHolder);
@@ -255,10 +255,10 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
         jdbcTemplate.update(con -> {
             PreparedStatement preparedStatement = con.prepareStatement("UPDATE WEATHERENTRY SET DESCRIPTION = ?, WINDENTRY_ID = ?, RAINENTRY_ID = ? WHERE ID = ?");
 
-            preparedStatement.setString(1, weatherEntry.getDescription());
-            preparedStatement.setLong(2, weatherEntry.getWindEntry().getId());
-            preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
-            preparedStatement.setLong(4, weatherEntry.getId());
+            preparedStatement.setString(1, weatherEntry.description());
+            preparedStatement.setLong(2, weatherEntry.windEntry().id());
+            preparedStatement.setLong(3, weatherEntry.rainEntry().id());
+            preparedStatement.setLong(4, weatherEntry.id());
             return preparedStatement;
         });
 
@@ -278,11 +278,11 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                                     "WHERE ID = ?"
                     );
 
-                    preparedStatement.setString(1, weatherEntry.getDescription());
-                    preparedStatement.setInt(2, weatherEntry.getMinimumTemperature());
-                    preparedStatement.setInt(3, weatherEntry.getMaximumTemperature());
-                    preparedStatement.setDate(4, new java.sql.Date(weatherEntry.getEntryDate().getTime()));
-                    preparedStatement.setLong(5, weatherEntry.getId());
+                    preparedStatement.setString(1, weatherEntry.description());
+                    preparedStatement.setInt(2, weatherEntry.minimumTemperature());
+                    preparedStatement.setInt(3, weatherEntry.maximumTemperature());
+                    preparedStatement.setDate(4, new java.sql.Date(weatherEntry.entryDate().getTime()));
+                    preparedStatement.setLong(5, weatherEntry.id());
                     return preparedStatement;
                 });
 
@@ -291,10 +291,10 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                             "UPDATE WINDENTRY SET DESCRIPTION = ?, WINDDIRECTION = ?, WINDSPEED = ? WHERE ID = ?"
                     );
 
-                    preparedStatement.setString(1, weatherEntry.getWindEntry().getDescription());
-                    preparedStatement.setString(2, weatherEntry.getWindEntry().getWindDirection().name());
-                    preparedStatement.setInt(3, weatherEntry.getWindEntry().getWindspeed());
-                    preparedStatement.setLong(4, weatherEntry.getWindEntry().getId());
+                    preparedStatement.setString(1, weatherEntry.windEntry().description());
+                    preparedStatement.setString(2, weatherEntry.windEntry().windDirection().name());
+                    preparedStatement.setInt(3, weatherEntry.windEntry().windspeed());
+                    preparedStatement.setLong(4, weatherEntry.windEntry().id());
                     return preparedStatement;
                 });
 
@@ -302,9 +302,9 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                     final PreparedStatement preparedStatement = con.prepareStatement(
                             "UPDATE RAINENTRY SET DESCRIPTION = ?, VOLUME = ? WHERE ID = ?"
                     );
-                    preparedStatement.setString(1, weatherEntry.getRainEntry().getDescription());
-                    preparedStatement.setInt(2, weatherEntry.getRainEntry().getVolume());
-                    preparedStatement.setLong(3, weatherEntry.getRainEntry().getId());
+                    preparedStatement.setString(1, weatherEntry.rainEntry().description());
+                    preparedStatement.setInt(2, weatherEntry.rainEntry().volume());
+                    preparedStatement.setLong(3, weatherEntry.rainEntry().id());
                     return preparedStatement;
                 });
             }

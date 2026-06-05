@@ -101,10 +101,10 @@ public class WeatherEntryEditor extends JFrame {
 				//TODO use databinding?
 				try {
 					if (weatherEntry != null) {
-						RainEntry rainEntry = new RainEntry(weatherEntry.getRainEntry().getId(), (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-						WindEntry windEntry = new WindEntry(weatherEntry.getWindEntry().getId(), taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry().id(), (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(weatherEntry.windEntry().id(), taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry updateWeatherEntry = new WeatherEntry(
-								weatherEntry.getId(),
+								weatherEntry.id(),
 								taDescription.getText(),
 								WeatherHistoryService.simpleDateFormat.parse(tfDate.getText()),
 								new Date(),
@@ -143,15 +143,15 @@ public class WeatherEntryEditor extends JFrame {
 		resetFields();
 
 		if (weatherEntry != null) {
-			tfDate.setText(weatherEntry.getCaptureDate().toString());
-			jSpinnerMin.setValue(weatherEntry.getMinimumTemperature());
-			jSpinnerMax.setValue(weatherEntry.getMaximumTemperature());
-			taDescription.setText(weatherEntry.getDescription());
-			windDirectionJComboBox.setSelectedItem(weatherEntry.getWindEntry().getWindDirection());
-			jSpinnerWindSpeed.setValue(weatherEntry.getWindEntry().getWindspeed());
-			jSpinnerRainVolume.setValue(weatherEntry.getRainEntry().getVolume());
-			taWindDescription.setText(weatherEntry.getWindEntry().getDescription());
-			taRainDescription.setText(weatherEntry.getRainEntry().getDescription());
+			tfDate.setText(weatherEntry.captureDate().toString());
+			jSpinnerMin.setValue(weatherEntry.minimumTemperature());
+			jSpinnerMax.setValue(weatherEntry.maximumTemperature());
+			taDescription.setText(weatherEntry.description());
+			windDirectionJComboBox.setSelectedItem(weatherEntry.windEntry().windDirection());
+			jSpinnerWindSpeed.setValue(weatherEntry.windEntry().windspeed());
+			jSpinnerRainVolume.setValue(weatherEntry.rainEntry().volume());
+			taWindDescription.setText(weatherEntry.windEntry().description());
+			taRainDescription.setText(weatherEntry.rainEntry().description());
 		}
 		setVisible(true);
 	}
