@@ -6,7 +6,10 @@ import java.awt.*;
 
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.TitledPanelGenerator;
 import za.co.johanmynhardt.jweatherhistory.gui.uibuilder.UIBuilderService;
+import za.co.johanmynhardt.jweatherhistory.model.RainEntry;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
+import za.co.johanmynhardt.jweatherhistory.model.WindEntry;
+import za.co.johanmynhardt.jweatherhistory.model.wind.WindDirection;
 
 /**
  * @author Johan Mynhardt
@@ -85,9 +88,16 @@ public class WeatherEntryDisplayPanel extends JPanel {
 		minTempDisplay.setText(weatherEntry.minimumTemperature() + "");
 		maxTempDisplay.setText(weatherEntry.maximumTemperature() + "");
 		descriptionDisplay.setText(weatherEntry.description().trim().isEmpty() ? "No description" : weatherEntry.description());
-		windDirectionDisplay.setText(weatherEntry.windEntry().windDirection().name());
-		windSpeedDisplay.setText(weatherEntry.windEntry().windspeed() + "");
-		rainVolumeDisplay.setText(weatherEntry.rainEntry().volume() + "");
-		rainDescriptionDisplay.setText(weatherEntry.rainEntry().description());
+		
+		// Java 21 Record Pattern: safely destructure and avoid NPEs
+		if (weatherEntry.windEntry() instanceof WindEntry(long wId, String wDesc, WindDirection direction, int windspeed, WeatherEntry wWeather)) {
+			windDirectionDisplay.setText(direction.name());
+			windSpeedDisplay.setText(windspeed + "");
+		}
+		
+		if (weatherEntry.rainEntry() instanceof RainEntry(long rId, int volume, String rDesc, WeatherEntry rWeather)) {
+			rainVolumeDisplay.setText(volume + "");
+			rainDescriptionDisplay.setText(rDesc);
+		}
 	}
 }

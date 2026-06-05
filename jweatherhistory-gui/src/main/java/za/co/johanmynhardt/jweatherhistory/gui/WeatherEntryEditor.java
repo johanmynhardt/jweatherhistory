@@ -101,8 +101,19 @@ public class WeatherEntryEditor extends JFrame {
 				//TODO use databinding?
 				try {
 					if (weatherEntry != null) {
-						RainEntry rainEntry = new RainEntry(weatherEntry.rainEntry().id(), (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
-						WindEntry windEntry = new WindEntry(weatherEntry.windEntry().id(), taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
+						// Java 21 Record Pattern: safely extract existing IDs for the update
+						long rainId = -1;
+						if (weatherEntry.rainEntry() instanceof RainEntry(long rId, int rVol, String rDesc, WeatherEntry rWe)) {
+							rainId = rId;
+						}
+					
+						long windId = -1;
+						if (weatherEntry.windEntry() instanceof WindEntry(long wId, String wDesc, WindDirection wDir, int wSpeed, WeatherEntry wWe)) {
+							windId = wId;
+						}
+
+						RainEntry rainEntry = new RainEntry(rainId, (Integer) jSpinnerRainVolume.getValue(), taRainDescription.getText(), null);
+						WindEntry windEntry = new WindEntry(windId, taWindDescription.getText(), (WindDirection) windDirectionJComboBox.getSelectedItem(), (Integer) jSpinnerWindSpeed.getValue(), null);
 						WeatherEntry updateWeatherEntry = new WeatherEntry(
 								weatherEntry.id(),
 								taDescription.getText(),
@@ -147,11 +158,18 @@ public class WeatherEntryEditor extends JFrame {
 			jSpinnerMin.setValue(weatherEntry.minimumTemperature());
 			jSpinnerMax.setValue(weatherEntry.maximumTemperature());
 			taDescription.setText(weatherEntry.description());
-			windDirectionJComboBox.setSelectedItem(weatherEntry.windEntry().windDirection());
-			jSpinnerWindSpeed.setValue(weatherEntry.windEntry().windspeed());
-			jSpinnerRainVolume.setValue(weatherEntry.rainEntry().volume());
-			taWindDescription.setText(weatherEntry.windEntry().description());
-			taRainDescription.setText(weatherEntry.rainEntry().description());
+			
+			// Java 21 Record Pattern: safely destructure nested records
+			if (weatherEntry.windEntry() instanceof WindEntry(long wId, String wDesc, WindDirection direction, int windspeed, WeatherEntry wWeather)) {
+				windDirectionJComboBox.setSelectedItem(direction);
+				jSpinnerWindSpeed.setValue(windspeed);
+				taWindDescription.setText(wDesc);
+			}
+			
+			if (weatherEntry.rainEntry() instanceof RainEntry(long rId, int volume, String rDesc, WeatherEntry rWeather)) {
+				jSpinnerRainVolume.setValue(volume);
+				taRainDescription.setText(rDesc);
+			}
 		}
 		setVisible(true);
 	}
