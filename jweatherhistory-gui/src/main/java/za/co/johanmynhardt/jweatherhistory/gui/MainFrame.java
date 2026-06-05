@@ -253,22 +253,16 @@ public class MainFrame extends JFrame implements ApplicationContextAware {
             public Object getValueAt(int row, int column) {
                 WeatherEntry selectedEntry = entries.get(row);
 
-                switch (column) {
-                case 1:
-                    return selectedEntry.id();
-                case 2:
-                    return selectedEntry.description();
-                case 3:
-                    return selectedEntry.captureDate() == null ? null : selectedEntry.captureDate();
-                case 4:
-                    return selectedEntry.entryDate() == null ? null : selectedEntry.entryDate();
-                case 5:
-                    return selectedEntry.minimumTemperature();
-                case 6:
-                    return selectedEntry.maximumTemperature();
-                default:
-                    return null;
-                }
+                // Java 21 Switch Expression: cleaner, safer, no break statements needed
+                return switch (column) {
+                    case 1 -> selectedEntry.id();
+                    case 2 -> selectedEntry.description();
+                    case 3 -> selectedEntry.captureDate();
+                    case 4 -> selectedEntry.entryDate();
+                    case 5 -> selectedEntry.minimumTemperature();
+                    case 6 -> selectedEntry.maximumTemperature();
+                    default -> null;
+                };
             }
         };
 
