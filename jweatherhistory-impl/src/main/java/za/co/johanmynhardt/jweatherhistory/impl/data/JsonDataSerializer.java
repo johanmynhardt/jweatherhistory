@@ -1,18 +1,17 @@
 package za.co.johanmynhardt.jweatherhistory.impl.data;
 
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.inject.Inject;
 import za.co.johanmynhardt.jweatherhistory.api.data.IDataSerializer;
 import za.co.johanmynhardt.jweatherhistory.impl.service.WeatherHistoryService;
 import za.co.johanmynhardt.jweatherhistory.model.WeatherEntry;
@@ -46,7 +45,7 @@ public class JsonDataSerializer implements IDataSerializer{
     @Override
     public List<WeatherEntry> importWeatherEntries(InputStream inputStream) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        final List<WeatherEntry> entries = Arrays.asList(mapper.reader(WeatherEntry[].class).readValue(inputStream));
+        final List<WeatherEntry> entries = Arrays.asList(mapper.readerFor(WeatherEntry[].class).readValue(inputStream));
         LOG.debug("Imported weatherEntries={}", entries);
 
         for (WeatherEntry entry : entries) {

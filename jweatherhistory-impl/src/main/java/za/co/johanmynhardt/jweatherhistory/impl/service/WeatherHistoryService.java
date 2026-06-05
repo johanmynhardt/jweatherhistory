@@ -1,19 +1,5 @@
 package za.co.johanmynhardt.jweatherhistory.impl.service;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -22,6 +8,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import za.co.johanmynhardt.jweatherhistory.api.service.CaptureService;
 import za.co.johanmynhardt.jweatherhistory.api.service.ReaderService;
 import za.co.johanmynhardt.jweatherhistory.api.service.UpdateService;
@@ -38,7 +36,6 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final Logger LOG = LoggerFactory.getLogger(WeatherHistoryService.class);
     public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
-    private static SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Inject
     private JdbcTemplate jdbcTemplate;
@@ -120,10 +117,9 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
                 updated = true;
             }
 
-            WeatherEntry weatherEntry2 = null;
-
+            
             if (updated) {
-                weatherEntry2 = new WeatherEntry(
+                WeatherEntry weatherEntry2 = new WeatherEntry(
                         weatherEntry1.id(),
                         weatherEntry1.description(),
                         weatherEntry1.entryDate(),
