@@ -108,12 +108,14 @@ public class WeatherHistoryService implements CaptureService, ReaderService, Upd
             RainEntry createdRainEntry = null;
 
             boolean updated = false;
-            if (weatherEntry1.rainEntry() != null) {
-                createdRainEntry = createRainEntry(weatherEntry1.rainEntry().description(), weatherEntry1.rainEntry().volume(), weatherEntry1);
+            
+            // Java 21 Record Pattern: combines null-check and destructuring
+            if (weatherEntry1.rainEntry() instanceof RainEntry(long rId, int volume, String rDesc, WeatherEntry rWeather)) {
+                createdRainEntry = createRainEntry(rDesc, volume, weatherEntry1);
                 updated = true;
             }
-            if (weatherEntry1.windEntry() != null) {
-                createdWindEntry = createWindEntry(weatherEntry1.windEntry().description(), weatherEntry1.windEntry().windDirection(), weatherEntry1.windEntry().windspeed(), weatherEntry1);
+            if (weatherEntry1.windEntry() instanceof WindEntry(long wId, String wDesc, WindDirection direction, int windspeed, WeatherEntry wWeather)) {
+                createdWindEntry = createWindEntry(wDesc, direction, windspeed, weatherEntry1);
                 updated = true;
             }
 
