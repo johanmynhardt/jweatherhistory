@@ -10,8 +10,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
