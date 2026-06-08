@@ -7,8 +7,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.jgoodies.looks.plastic.PlasticLookAndFeel;
@@ -20,18 +18,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import javax.swing.*;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Date;
 
-import za.co.johanmynhardt.jweatherhistory.api.data.IDataExport;
 import za.co.johanmynhardt.jweatherhistory.gui.events.ItemsUpdatedEvent;
 import za.co.johanmynhardt.jweatherhistory.impl.config.AppConfig;
 
 @Component
 public class JWeatherHistoryUI implements ApplicationContextAware {
-    private static Logger LOG = LoggerFactory.getLogger(JWeatherHistoryUI.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JWeatherHistoryUI.class);
     private ApplicationContext context;
 
     @PostConstruct
